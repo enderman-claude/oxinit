@@ -1,0 +1,55 @@
+# oxinit services. See README.md, Syntax.
+
+@heartbeat
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'while true; do echo alive; sleep 2; done'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            2s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@flaky
+!mood                grumpy
+!summon              /bin/sh
+!incant              -c 'sleep 1; exit 3'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@oneshot
+!mood                sleepy
+!summon              /bin/sh
+!incant              -c 'echo done once'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
