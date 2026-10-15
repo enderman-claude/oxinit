@@ -1,0 +1,20 @@
+# Services for the interactive VM (vm-test.sh). The login prompt on the console
+# is added by vm-test.sh itself, so it is not listed here.
+
+@heartbeat
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'while true; do echo alive; sleep 10; done'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            2s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
