@@ -4,6 +4,8 @@ set -u
 cd "$(dirname "$0")"
 PASS=0; FAIL=0
 TMP=$(mktemp -d)
+# Routine lines go to this log after boot. Tests read it from here, never from /var/log.
+export OXINIT_LOG="$TMP/oxinit.log"
 trap 'rm -rf "$TMP"' EXIT
 
 check() {
@@ -153,11 +155,14 @@ check "init runs as a process in a fresh PID namespace" "[ -n \"\$INIT\" ]"
 [ -n "$INIT" ] && kill -TERM "$INIT"
 sleep 4
 
-check "all services start" "grep -q 'heartbeat started' '$LOG' && grep -q 'flaky started' '$LOG'"
-check "crashing service restarts with cooldown" "grep -q 'flaky restarting in' '$LOG'"
-check "lives: never service is not restarted" "grep -q 'oneshot will not be restarted' '$LOG' && ! grep -q 'oneshot restarting' '$LOG'"
+ALL="$LOG $OXINIT_LOG"
+check "all services start" "grep -q 'heartbeat started' $ALL && grep -q 'flaky started' $ALL"
+check "crashing service restarts with cooldown" "grep -q 'flaky restarting in' '$OXINIT_LOG'"
+check "lives: never service is not restarted" "grep -q 'oneshot will not be restarted' '$OXINIT_LOG' && ! grep -q 'oneshot restarting' $ALL"
 check "shutdown sends the eviction notice" "grep -q 'heartbeat received eviction notice' '$LOG'"
-check "service lines use the mood prefix" "grep -q '^~ heartbeat' '$LOG' && grep -q '^>:( flaky' '$LOG'"
+check "service lines use the mood prefix" "grep -q '^~ heartbeat' $ALL && grep -q '^>:( flaky' $ALL"
+check "routine lines stay off the console after boot" "! grep -q 'restarting in' '$LOG'"
+check "routine lines go to the log file" "grep -q 'flaky restarting in' '$OXINIT_LOG'"
 check "oxinit exits cleanly" "grep -q '^oxinit: exiting' '$LOG'"
 
 echo ""

@@ -97,6 +97,12 @@ Color is used only when stdout is a terminal. Piped or saved output keeps the pr
 
 Plain `oxinit:` lines (boot, shutdown, config errors) have no mood and no color.
 
+### Where output goes
+
+Before boot finishes, everything goes to the console. After boot, routine lines (service starts, restarts, crashes, `oxictl` requests) go to a log file, so the console stays readable. Shutdown messages and fatal errors always go to the console.
+
+The log is `$OXINIT_LOG` when set, otherwise `/var/log/oxinit.log`. If the log cannot be opened, routine lines fall back to the console. Use the `!scoreboard` field to send one service's own output to a file.
+
 ### Memes
 
 Service lines end with a meme. The line is picked by hashing the service name, mood and, for furry services, the declared fursona species. The same service always gets the same line for the same event.

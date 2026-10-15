@@ -200,6 +200,8 @@ cat > "$ROOT/etc/motd" <<'EOF'
 
   oxinit test VM. PID 1 is oxinit.
   oxictl status           list services
+  tail -f /var/log/oxinit.log   routine service output
+  tail -f /var/log/heartbeat.log   heartbeat output
   kill -TERM 1            shut the VM down (from root)
 
 EOF

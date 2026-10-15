@@ -85,13 +85,13 @@ procedure Oxinit_Main is
       Deadline : Ada.Real_Time.Time;
    begin
       Oxinit.Table.Registry.Begin_Stop;
-      Oxinit.Output.Olog ("shutdown requested");
+      Oxinit.Output.Olog_Important ("shutdown requested");
 
       for I in 1 .. Count loop
          Pid := Oxinit.Table.Registry.Pid_Of (I);
          if Pid > 0 then
             Svc := Service_Vectors.Element (Services, I);
-            Oxinit.Output.Svc_Line (Svc, "received eviction notice", "stop");
+            Oxinit.Output.Svc_Line (Svc, "received eviction notice", "stop", Important => True);
             Ignored := Oxinit.Posix.Kill (Pid, Interfaces.C.int (Svc.Notice));
          end if;
       end loop;
@@ -107,7 +107,7 @@ procedure Oxinit_Main is
          if not Workers (I).all'Terminated then
             Pid := Oxinit.Table.Registry.Pid_Of (I);
             if Pid > 0 then
-               Oxinit.Output.Svc_Line (Svc, "did not leave, forced removal (SIGKILL)", "kill");
+               Oxinit.Output.Svc_Line (Svc, "did not leave, forced removal (SIGKILL)", "kill", Important => True);
                Ignored := Oxinit.Posix.Kill (Pid, Oxinit.Posix.Sigkill);
             end if;
             Deadline := Ada.Real_Time.Clock + Ada.Real_Time.To_Time_Span (5.0);
@@ -144,6 +144,7 @@ begin
 
    Oxinit.Ctl_Server.Server.Start;
    Oxinit.Output.Olog ("loaded" & Natural'Image (Count) & " service(s) from " & Config_Path (1));
+   Oxinit.Output.Set_Booted;   --  boot is done: routine lines go to the log from now on
 
    while not Oxinit.Signals.Stop_Requested loop
       delay 0.2;
@@ -151,15 +152,15 @@ begin
 
    Shutdown;
    Oxinit.Socket.Remove (Oxinit.Socket.Path);
-   Oxinit.Output.Olog ("exiting");
+   Oxinit.Output.Olog_Important ("exiting");
 
    if Oxinit.Posix.Getpid = 1 then
       --  As PID 1, returning would panic the kernel ("Attempted to kill init").
       --  Flush the disks and power off instead.
-      Oxinit.Output.Olog ("powering off");
+      Oxinit.Output.Olog_Important ("powering off");
       Oxinit.Posix.Sync;
       if Oxinit.Posix.Reboot (Oxinit.Posix.Reboot_Power_Off) < 0 then
-         Oxinit.Output.Olog ("power off failed, halting here");
+         Oxinit.Output.Olog_Important ("power off failed, halting here");
          loop
             delay 3600.0;
          end loop;
@@ -169,9 +170,9 @@ begin
 
 exception
    when E : Oxinit.Types.Config_Error =>
-      Oxinit.Output.Olog ("config error: " & Ada.Exceptions.Exception_Message (E));
+      Oxinit.Output.Olog_Important ("config error: " & Ada.Exceptions.Exception_Message (E));
       Finish (1);
    when E : Oxinit.Config.Read_Error =>
-      Oxinit.Output.Olog (Ada.Exceptions.Exception_Message (E));
+      Oxinit.Output.Olog_Important (Ada.Exceptions.Exception_Message (E));
       Finish (1);
 end Oxinit_Main;
