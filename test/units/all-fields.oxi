@@ -1,0 +1,317 @@
+# Unit file: every field, every mood, every furry species.
+# Used by test.sh with --check, so it must always pass. Nothing here is
+# started by the test suite. Each service name is unique. See README.md, Syntax.
+
+# --- Furry section -----------------------------------------------------------
+# Recognised species (matched case-insensitively): protogen (proto), wolf, fox, dragon.
+# Anything else uses the generic meme pool.
+
+@furry-protogen
+!mood                owo
+!summon              /bin/sh
+!incant              -c 'sleep 1; exit 0'
+!arena               /
+!role                root
+!party               root
+!loadout             FURSONA=protogen VISOR=on
+!lives               on-failure
+!cooldown            1s
+!eviction-notice     HUP
+!grace               3s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Visor
+!fursona-description A protogen who keeps the visor on.
+!fursona-species     Protogen
+
+@furry-wolf
+!mood                feral
+!summon              /bin/sh
+!incant              -c 'echo "howl at the moon"'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            2s
+!eviction-notice     INT
+!grace               2s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Kestrel
+!fursona-description A silver wolf who guards the web server.
+!fursona-species     wolf
+
+@furry-fox
+!mood                sus
+!summon              /bin/sh
+!incant              -c 'echo fox'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     QUIT
+!grace               1s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Ember
+!fursona-description A quick red fox who never stays long.
+!fursona-species     fox
+
+@furry-dragon
+!mood                blessed
+!summon              /bin/sh
+!incant              -c 'echo breathing'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            3s
+!eviction-notice     USR1
+!grace               4s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Sable
+!fursona-description A dragon who sleeps on the hoard.
+!fursona-species     Dragon
+
+@furry-axolotl
+!mood                hyper
+!summon              /bin/sh
+!incant              -c 'echo regenerating'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     USR2
+!grace               2s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Pip
+!fursona-description An axolotl. Not on the species list, so generic lines.
+!fursona-species     axolotl
+
+@furry-off
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'echo not a furry'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+# --- Moods: one service per mood, non-furry ---------------------------
+
+@mood-chill
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'echo mood chill'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            0s
+!eviction-notice     TERM
+!grace               1s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-hyper
+!mood                hyper
+!summon              /bin/sh
+!incant              -c 'echo mood hyper'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            1s
+!eviction-notice     HUP
+!grace               2s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-grumpy
+!mood                grumpy
+!summon              /bin/sh
+!incant              -c 'echo mood grumpy'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               on-failure
+!cooldown            2s
+!eviction-notice     INT
+!grace               3s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-sleepy
+!mood                sleepy
+!summon              /bin/sh
+!incant              -c 'echo mood sleepy'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            0s
+!eviction-notice     QUIT
+!grace               4s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-feral
+!mood                feral
+!summon              /bin/sh
+!incant              -c 'echo mood feral'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            1s
+!eviction-notice     USR1
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-owo
+!mood                owo
+!summon              /bin/sh
+!incant              -c 'echo mood owo'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               on-failure
+!cooldown            2s
+!eviction-notice     USR2
+!grace               6s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-sus
+!mood                sus
+!summon              /bin/sh
+!incant              -c 'echo mood sus'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            0s
+!eviction-notice     TERM
+!grace               7s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-blessed
+!mood                blessed
+!summon              /bin/sh
+!incant              -c 'echo mood blessed'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            1s
+!eviction-notice     HUP
+!grace               8s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@mood-doomed
+!mood                doomed
+!summon              /bin/sh
+!incant              -c 'echo mood doomed'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               on-failure
+!cooldown            2s
+!eviction-notice     INT
+!grace               9s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+# --- Argument quoting and environment ----------------------------------
+
+@quoting
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'echo "two words" && echo \"nested\"'
+!arena               /
+!role                root
+!party               root
+!loadout             A=1 B=two
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          /tmp/oxinit-unit-quoting.log
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@empty-loadout
+!mood                sleepy
+!summon              /bin/sh
+!incant              -
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               1s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
