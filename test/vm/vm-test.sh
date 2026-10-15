@@ -268,7 +268,7 @@ fi
 echo "vm-test: log in as root. Ctrl-A then X quits QEMU."
 
 exec qemu-system-x86_64 \
-  -accel kvm:tcg -cpu max \
+  -cpu max \
   -m "$MEM" -smp "$CPUS" \
   -nographic -serial mon:stdio -no-reboot \
   -kernel "$KERNEL" -initrd "$IMAGE" \
