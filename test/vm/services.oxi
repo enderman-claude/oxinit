@@ -1,0 +1,37 @@
+# Services for the VM image. Same syntax as etc/services.oxi.
+
+@heartbeat
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'while true; do echo alive; sleep 2; done'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            2s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@selftest
+!mood                owo
+!summon              /bin/sh
+!incant              /usr/lib/oxinit/selftest.sh
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -

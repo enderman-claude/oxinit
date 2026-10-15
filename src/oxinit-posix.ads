@@ -63,4 +63,13 @@ package Oxinit.Posix is
    function Signal (Sig : C_Int; Handler : System.Address) return System.Address;
    pragma Import (C, Signal, "signal");
 
+   procedure Sync;
+   pragma Import (C, Sync, "sync");
+
+   --  Linux reboot(2) via glibc. Cmd 16#4321FEDC# powers off.
+   function Reboot (Cmd : C_Int) return C_Int;
+   pragma Import (C, Reboot, "reboot");
+
+   Reboot_Power_Off : constant C_Int := 16#4321FEDC#;
+
 end Oxinit.Posix;

@@ -15,6 +15,7 @@ project Oxinit_Prj is
    end Compiler;
 
    package Linker is
+      --  The VM image copies the shared libraries these binaries need (see test/vm).
       --  memeunit is compiled in as a static archive.
       for Default_Switches ("Ada") use ("memeunit/libmemeunit.a");
    end Linker;

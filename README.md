@@ -165,6 +165,20 @@ Exit status is 0 on success and 1 on an error reply, such as an unknown service 
 
 Builds everything, runs one check per rule above, then runs an integration test inside a fresh PID namespace.
 
+## Testing in a VM
+
+`test/vm/` builds a bootable image and boots it under QEMU, with oxinit as PID 1 under a real kernel. The guest runs a self-test service that uses `oxictl` and then powers the machine off. The driver checks the serial log.
+
+```sh
+bash test/vm/test-vm.sh
+```
+
+Requirements: `qemu-system-x86_64`, a static `busybox`, `cpio`, `gzip`, `gprbuild`, and a Linux kernel with serial console and devtmpfs built in. The kernel defaults to the newest `/boot/vmlinuz-*`. Override it with `KERNEL=/path/to/bzImage`. The image builder copies the shared libraries from `ldd`, so it works with whatever the host provides.
+
+Without KVM (`/dev/kvm`), QEMU uses software emulation. It is slower but gives the same result. `VM_TIMEOUT` sets the QEMU timeout, default 300 seconds.
+
+The boot log is in `build/vm/boot.log`.
+
 ## License
 
 Do what you want. If it eats your PID 1, that's on you.

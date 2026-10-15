@@ -152,6 +152,19 @@ begin
    Shutdown;
    Oxinit.Socket.Remove (Oxinit.Socket.Path);
    Oxinit.Output.Olog ("exiting");
+
+   if Oxinit.Posix.Getpid = 1 then
+      --  As PID 1, returning would panic the kernel ("Attempted to kill init").
+      --  Flush the disks and power off instead.
+      Oxinit.Output.Olog ("powering off");
+      Oxinit.Posix.Sync;
+      if Oxinit.Posix.Reboot (Oxinit.Posix.Reboot_Power_Off) < 0 then
+         Oxinit.Output.Olog ("power off failed, halting here");
+         loop
+            delay 3600.0;
+         end loop;
+      end if;
+   end if;
    Finish (0);
 
 exception

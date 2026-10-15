@@ -5,3 +5,4 @@ memeunit/*.a
 memeunit/*.so
 obj/
 bin/
+build/
