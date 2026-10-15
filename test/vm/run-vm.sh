@@ -17,7 +17,7 @@ fi
 
 # -no-reboot: a guest reboot exits QEMU instead of looping.
 # panic=-1: a kernel panic reboots at once, which -no-reboot turns into an exit.
-set -- $ACCEL -m 512 -smp 1 -nographic -no-reboot \
+set -- $ACCEL -m "${VM_MEM:-512}" -smp "${VM_CPUS:-1}" -nographic -no-reboot \
   -kernel "$KERNEL" -initrd build/vm/initramfs.cpio.gz \
   -append "console=ttyS0 panic=-1 init=/init loglevel=4"
 

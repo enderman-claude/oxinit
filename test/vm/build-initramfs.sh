@@ -43,6 +43,7 @@ cat > "$ROOT/init" <<'INITEOF'
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
+[ -f /etc/hostname ] && hostname -F /etc/hostname 2>/dev/null
 mkdir -p /run /tmp
 echo "init: pid $$, handing over to oxinit"
 exec /sbin/oxinit /etc/oxinit/services.oxi
@@ -59,6 +60,11 @@ if [ "$(id -u)" -eq 0 ]; then
   [ -e "$ROOT/dev/null" ] || mknod -m 666 "$ROOT/dev/null" c 1 3
 else
   echo "build-initramfs: not root, /dev/console will be created by devtmpfs at boot" >&2
+fi
+
+# Optional overlay: files copied over the base image (EXTRA_ROOTFS=dir).
+if [ -n "${EXTRA_ROOTFS:-}" ]; then
+  cp -a "$EXTRA_ROOTFS"/. "$ROOT"/
 fi
 
 (cd "$ROOT" && find . | cpio -o -H newc --quiet) | gzip -9 > "$OUT/initramfs.cpio.gz"

@@ -198,3 +198,14 @@ sh test/vm/run-manual.sh
 ```
 
 Requirements and the `KERNEL` override are the same as for the automated VM test.
+
+## Interactive VM
+
+`test/vm/vm-test.sh` builds oxinit and a small root filesystem (hostname, release file, login banner, and a regular `tester` user), then boots it under QEMU with the console on your terminal. It runs `test/vm/manual.oxi` by default.
+
+```sh
+sh test/vm/vm-test.sh
+sh test/vm/vm-test.sh --services my.oxi --mem 1024 --cpus 2
+```
+
+Run `sh test/vm/vm-test.sh --help` for all options. Quit QEMU with Ctrl-A then X.
