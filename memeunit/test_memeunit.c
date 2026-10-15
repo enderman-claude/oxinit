@@ -35,6 +35,7 @@ int main(void) {
     CHECK("'wolf' is recognised", find_species("wolf") == &species_table[1]);
     CHECK("'fox' is recognised", find_species("fox") == &species_table[2]);
     CHECK("'dragon' is recognised", find_species("dragon") == &species_table[3]);
+    CHECK("'spy' is recognised", find_species("Spy") == &species_table[4]);
     CHECK("unknown species is not recognised", find_species("sheep") == NULL);
     CHECK("empty species is not recognised", find_species("") == NULL);
     CHECK("NULL species is not recognised", find_species(NULL) == NULL);
@@ -52,6 +53,7 @@ int main(void) {
     }
     CHECK("every kind has a wolf line", all_species);
 
+    CHECK("spy picks a spy line", is_species_line(memeunit_pick("start", "svc|CHILL", "spy"), &species_table[4], 0));
     CHECK("unknown kind returns empty", strcmp(memeunit_pick("nope", "x", ""), "") == 0);
 
     printf("%s\n", fails ? "memeunit tests FAILED" : "memeunit tests passed");

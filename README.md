@@ -101,7 +101,7 @@ Plain `oxinit:` lines (boot, shutdown, config errors) have no mood and no color.
 
 Service lines end with a meme. The line is picked by hashing the service name, mood and, for furry services, the declared fursona species. The same service always gets the same line for the same event.
 
-If a furry service's `!fursona-species` contains `proto` (protogen), `wolf`, `fox` or `dragon` (case-insensitive), that service draws from a short list of lines written for that species. Any other species, and every non-furry service, uses the generic pool.
+If a furry service's `!fursona-species` contains `proto` (protogen), `wolf`, `fox`, `dragon` or `spy` (case-insensitive). The `spy` species is a spy pretending to be a furry, and its lines are written from that angle, that service draws from a short list of lines written for that species. Any other species, and every non-furry service, uses the generic pool.
 
 ## Building
 

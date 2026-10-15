@@ -3,7 +3,7 @@
 # started by the test suite. Each service name is unique. See README.md, Syntax.
 
 # --- Furry section -----------------------------------------------------------
-# Recognised species (matched case-insensitively): protogen (proto), wolf, fox, dragon.
+# Recognised species (matched case-insensitively): protogen (proto), wolf, fox, dragon, spy.
 # Anything else uses the generic meme pool.
 
 @furry-protogen
@@ -77,6 +77,24 @@
 !fursona-name        Sable
 !fursona-description A dragon who sleeps on the hoard.
 !fursona-species     Dragon
+
+@furry-spy
+!mood                sus
+!summon              /bin/sh
+!incant              -c 'echo not really a furry'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        Agent Tail
+!fursona-description A spy in a fursuit. The tail is taped on.
+!fursona-species     Spy
 
 @furry-axolotl
 !mood                hyper

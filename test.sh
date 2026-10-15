@@ -54,7 +54,7 @@ check "a complete service passes" "[ \$RC -eq 0 ]"
 
 check "bundled example config passes" "./bin/oxinit --check etc/services.oxi >/dev/null 2>&1"
 check "unit file with every field passes" "./bin/oxinit --check test/units/all-fields.oxi >/dev/null 2>&1"
-check "unit file covers every recognised furry species" "grep -qi '^!fursona-species *protogen' test/units/all-fields.oxi && grep -qi '^!fursona-species *wolf' test/units/all-fields.oxi && grep -qi '^!fursona-species *fox' test/units/all-fields.oxi && grep -qi '^!fursona-species *dragon' test/units/all-fields.oxi"
+check "unit file covers every recognised furry species" "grep -qi '^!fursona-species *protogen' test/units/all-fields.oxi && grep -qi '^!fursona-species *wolf' test/units/all-fields.oxi && grep -qi '^!fursona-species *fox' test/units/all-fields.oxi && grep -qi '^!fursona-species *dragon' test/units/all-fields.oxi && grep -qi '^!fursona-species *spy' test/units/all-fields.oxi"
 check "unit file covers every mood" "grep -q '^!mood *chill' test/units/all-fields.oxi && grep -q '^!mood *hyper' test/units/all-fields.oxi && grep -q '^!mood *grumpy' test/units/all-fields.oxi && grep -q '^!mood *sleepy' test/units/all-fields.oxi && grep -q '^!mood *feral' test/units/all-fields.oxi && grep -q '^!mood *owo' test/units/all-fields.oxi && grep -q '^!mood *sus' test/units/all-fields.oxi && grep -q '^!mood *blessed' test/units/all-fields.oxi && grep -q '^!mood *doomed' test/units/all-fields.oxi"
 
 base_svc | sed 's/^!mood .*/!mood nope/' > "$TMP/t.oxi"; run_check "$TMP/t.oxi"

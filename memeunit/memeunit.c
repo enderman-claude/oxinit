@@ -87,13 +87,14 @@ static const struct meme_set table[N_KINDS] = {
 
 /* Species lines. Matched case-insensitively as a substring of the species
  * the service declares, so "Protogen", "protogen-ish" and "proto" all match.
+ * "spy" is the Spy: a spy pretending to be a furry.
  * lines[kind][n] lines up with table[kind] above. */
 struct species_set {
     const char *match;
     const char *lines[N_KINDS][N_SPECIES_LINES];
 };
 
-#define N_SPECIES 4
+#define N_SPECIES 5
 static const struct species_set species_table[N_SPECIES] = {
     { "proto", {
         { "Visor on, boop. Protogen systems online, process is up.",
@@ -166,6 +167,24 @@ static const struct species_set species_table[N_SPECIES] = {
           "Refused to leave the cave. SIGKILL breath." },
         { "The dragon sniffs the config and roars. Fix the fields.",
           "The hoard is safe, the config is not. Please fix it." },
+    }},
+    { "spy", {
+        { "Spy here, fursuit on, tail taped on. Process is up. Nobody looks closer.",
+          "Ears on, disguise on. Service running. I am definitely a furry, do not check." },
+        { "Fursuit caught on the cable and the process went down. Blending in is hard.",
+          "Disguise slipped mid-run, service exited. Cover blown, sort of." },
+        { "Quick costume change, back in. Totally a regular furry, honest.",
+          "Re-disguising and restarting. Nobody saw the tail fall off." },
+        { "In, out, one job, disguise folded up. Never was here.",
+          "Single mission complete. The fursuit went back in the bag." },
+        { "Too many slips. Cover is blown, pack up the suit and go.",
+          "Compromised. Abort, abort, the fursona was fake anyway." },
+        { "Asking nicely to stand down. Please do not look at the tail.",
+          "Requesting extraction. The suit is getting hot." },
+        { "Refused to leave, so the disguise comes off. SIGKILL. Sorry about the paws.",
+          "Uncooperative target. Going in hard. Ears off." },
+        { "Config has the wrong fields, the disguise will not hold. Fix it.",
+          "Bad config. Even a spy cannot pass as a furry with missing fields." },
     }},
 };
 
