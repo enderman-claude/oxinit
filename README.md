@@ -106,7 +106,7 @@ make -C memeunit
 gprbuild -P oxinit_prj.gpr
 ```
 
-The binary is written to `bin/oxinit`. There are no runtime dependencies.
+The binaries are written to `bin/oxinit` and `bin/oxictl`. There are no runtime dependencies.
 
 ## Running
 
@@ -124,6 +124,20 @@ Run services:
 
 As PID 1 in a container or VM, pass the config as the init program's argument. The default config path is `/etc/oxinit/services.oxi`.
 
+## Control: oxictl
+
+A running oxinit listens on a Unix socket at `/run/oxinit.sock`, or at `$OXINIT_SOCKET` if that is set. The socket is root-only (mode 600) and is removed on shutdown.
+
+```sh
+oxictl status          # each service: state, pid, mood, furry flag
+oxictl stop NAME       # send the eviction notice, keep it down until started again
+oxictl start NAME      # bring a stopped or given-up service back up
+```
+
+Exit status is 0 on success and 1 on an error reply, such as an unknown service name.
+
+`reload` is not implemented yet. The service list is read once at startup.
+
 ## Layout
 
 | Unit | Role |
@@ -136,7 +150,9 @@ As PID 1 in a container or VM, pass the config as the init program's argument. T
 | `oxinit-config` | Loads a file into the service list |
 | `oxinit-launch` | Prepares exec data and runs in the forked child |
 | `oxinit-table` | Pid registry and per-service mailboxes (protected objects) |
-| `oxinit-worker` | One task per service: spawn, wait, restart policy |
+| `oxinit-worker` | One task per service: spawn, wait, restart policy, stop and start requests |
+| `oxinit-ctl_server`, `oxinit-commands`, `oxinit-socket` | Control socket: accepts oxictl requests and runs them |
+| `oxictl_main.adb` | The oxictl client |
 | `oxinit-reaping` | The only task that calls `waitpid` |
 | `oxinit-output`, `oxinit-moods`, `oxinit-memes` | Themed output and the compiled-in memeunit |
 | `oxinit-posix`, `oxinit-accounts`, `oxinit-signals` | POSIX bindings, user lookup, signal handling |

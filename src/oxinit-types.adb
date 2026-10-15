@@ -22,6 +22,18 @@ package body Oxinit.Types is
       end case;
    end Lives_Name;
 
+   function State_Name (S : Run_State) return String is
+   begin
+      case S is
+         when Starting => return "starting";
+         when Running  => return "running";
+         when Cooling  => return "cooling down";
+         when Stopped  => return "stopped";
+         when Finished => return "finished";
+         when Given_Up => return "given up";
+      end case;
+   end State_Name;
+
    function Signal_Number (Name : String) return Natural is
    begin
       if Name = "HUP" then

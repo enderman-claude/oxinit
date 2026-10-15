@@ -122,8 +122,26 @@ check "duplicate service name is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | g
 echo "!mood chill" > "$TMP/t.oxi"; run_check "$TMP/t.oxi"
 check "a field before any service is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | grep -q 'before any @service'"
 
+# Control socket: oxictl against a live init, using a temporary socket path.
+SOCK="$TMP/ctl.sock"
+(OXINIT_SOCKET="$SOCK" ./bin/oxinit etc/services.oxi > "$TMP/ctl.log" 2>&1 & echo $! > "$TMP/ox.pid")
+sleep 3
+OXP=$(cat "$TMP/ox.pid")
+check "oxictl status lists each service with its state" "OXINIT_SOCKET=$SOCK ./bin/oxictl status | grep -q 'heartbeat: running'"
+check "status includes the furry flag" "OXINIT_SOCKET=$SOCK ./bin/oxictl status | grep -q 'furry false'"
+check "oxictl stop takes one service down" "OXINIT_SOCKET=$SOCK ./bin/oxictl stop heartbeat | grep -q 'ok: stopping heartbeat'"
+sleep 2
+check "stopped service is not restarted" "OXINIT_SOCKET=$SOCK ./bin/oxictl status | grep -q 'heartbeat: stopped'"
+check "oxictl start brings it back" "OXINIT_SOCKET=$SOCK ./bin/oxictl start heartbeat | grep -q 'ok: starting heartbeat' && sleep 2 && OXINIT_SOCKET=$SOCK ./bin/oxictl status | grep -q 'heartbeat: running'"
+OXINIT_SOCKET="$SOCK" ./bin/oxictl stop nope > /dev/null; RC=$?
+check "unknown service is an error with exit 1" "[ $RC -eq 1 ]"
+kill -TERM "$OXP" 2>/dev/null
+sleep 4
+check "control socket is removed on shutdown" "[ ! -e '$SOCK' ]"
+
 # Integration: run as PID 1 in a fresh PID namespace, then send SIGTERM.
 LOG="$TMP/run.log"
+export OXINIT_SOCKET="$TMP/int.sock"
 (unshare -fp --mount-proc ./bin/oxinit etc/services.oxi > "$LOG" 2>&1 &)
 sleep 6
 INIT=$(pgrep -f "^./bin/oxinit etc/services.oxi" | head -1)

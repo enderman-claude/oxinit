@@ -16,6 +16,9 @@ package Oxinit.Types is
    type Mood_Kind is (Chill, Hyper, Grumpy, Sleepy, Feral, Owo, Sus, Blessed, Doomed);
    type Lives_Kind is (Always, Never, On_Failure);
 
+   --  What a service is doing right now, as reported by oxictl status.
+   type Run_State is (Starting, Running, Cooling, Stopped, Finished, Given_Up);
+
    type Field_Id is
      (Mood, Summon, Incant, Arena, Role, Party, Loadout, Lives, Cooldown,
       Eviction_Notice, Grace, Scoreboard, Amiafurry,
@@ -52,6 +55,7 @@ package Oxinit.Types is
    --  Config field name as written in files, e.g. Eviction_Notice -> "eviction-notice".
    function Field_Name (F : Field_Id) return String;
    function Lives_Name (L : Lives_Kind) return String;
+   function State_Name (S : Run_State) return String;
    --  Signal number for a name without SIG; 0 if unsupported.
    function Signal_Number (Name : String) return Natural;
    function Img (N : Integer) return String;

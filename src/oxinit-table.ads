@@ -16,7 +16,9 @@ package Oxinit.Table is
 
    Boxes : array (1 .. Types.Max_Services) of Mailbox;
 
-   type Slot_Array is array (1 .. Types.Max_Services) of Interfaces.C.int;
+   type Slot_Array  is array (1 .. Types.Max_Services) of Interfaces.C.int;
+   type Flag_Array  is array (1 .. Types.Max_Services) of Boolean;
+   type State_Array is array (1 .. Types.Max_Services) of Types.Run_State;
 
    protected Registry is
       --  Forks and registers the child. Ok is False if stopping.
@@ -27,9 +29,16 @@ package Oxinit.Table is
       --  After this, Spawn refuses. Called once, at shutdown.
       procedure Begin_Stop;
       function Stopping return Boolean;
+      --  Wanted: False means "keep this service down" (oxictl stop, or it gave up).
+      procedure Set_Want (Idx : Positive; Value : Boolean);
+      function Want (Idx : Positive) return Boolean;
+      procedure Set_State (Idx : Positive; S : Types.Run_State);
+      function State_Of (Idx : Positive) return Types.Run_State;
    private
       Stop_Flag : Boolean := False;
       Slot      : Slot_Array := [others => 0];
+      Wants     : Flag_Array := [others => True];
+      States    : State_Array := [others => Types.Starting];
    end Registry;
 
 end Oxinit.Table;

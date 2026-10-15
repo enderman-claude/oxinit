@@ -5,12 +5,14 @@ with Ada.Real_Time;
 with Ada.Text_IO;
 with Interfaces.C;
 with Oxinit.Config;
+with Oxinit.Ctl_Server;
 with Oxinit.Launch;
 with Oxinit.Moods;
 with Oxinit.Output;
 with Oxinit.Posix;
 with Oxinit.Reaping;  --  elaborating this unit starts the reaper task
 with Oxinit.Signals;
+with Oxinit.Socket;
 with Oxinit.Table;
 with Oxinit.Types;
 with Oxinit.Worker;
@@ -140,6 +142,7 @@ begin
       Workers (I) := new Oxinit.Worker.Worker (I);
    end loop;
 
+   Oxinit.Ctl_Server.Server.Start;
    Oxinit.Output.Olog ("loaded" & Natural'Image (Count) & " service(s) from " & Config_Path (1));
 
    while not Oxinit.Signals.Stop_Requested loop
@@ -147,6 +150,7 @@ begin
    end loop;
 
    Shutdown;
+   Oxinit.Socket.Remove (Oxinit.Socket.Path);
    Oxinit.Output.Olog ("exiting");
    Finish (0);
 

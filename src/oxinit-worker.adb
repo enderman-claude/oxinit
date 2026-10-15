@@ -41,74 +41,93 @@ package body Oxinit.Worker is
       loop
          exit Main_Loop when Table.Registry.Stopping;
 
-         Table.Registry.Spawn (Idx, Pid, Ok);
-         exit Main_Loop when not Ok;
+         if not Table.Registry.Want (Idx) then
+            --  Down on purpose (oxictl stop, finished, or gave up). Wait for a start.
+            Table.Registry.Set_State (Idx, Types.Stopped);
+            Count := 0;
+            delay 0.1;
+         else
+            Table.Registry.Spawn (Idx, Pid, Ok);
+            exit Main_Loop when not Ok;
 
-         if not Started then
-            Output.Svc_Rule (Svc);
-            Started := True;
-         end if;
-         Output.Svc_Line (Svc, "started (pid " & Types.Img (Integer (Pid)) & ")", "start");
+            if not Started then
+               Output.Svc_Rule (Svc);
+               Started := True;
+            end if;
+            Table.Registry.Set_State (Idx, Types.Running);
+            Output.Svc_Line (Svc, "started (pid " & Types.Img (Integer (Pid)) & ")", "start");
 
-         Table.Boxes (Idx).Get (Status);
-         Code := Exit_Code (Status);
-         Output.Svc_Line (Svc, "exited with code " & Types.Img (Code), "exit");
+            Table.Boxes (Idx).Get (Status);
+            Code := Exit_Code (Status);
+            Output.Svc_Line (Svc, "exited with code " & Types.Img (Code), "exit");
 
-         if Table.Registry.Stopping then
-            Output.Svc_Line (Svc, "left during shutdown", "stop");
-            exit Main_Loop;
-         end if;
+            if Table.Registry.Stopping then
+               Output.Svc_Line (Svc, "left during shutdown", "stop");
+               exit Main_Loop;
 
-         if Svc.Lives = Types.Never
-           or else (Svc.Lives = Types.On_Failure and then Code = 0)
-         then
-            Output.Svc_Line (Svc, "will not be restarted (lives: "
-                             & Types.Lives_Name (Svc.Lives) & ")", "oneshot");
-            exit Main_Loop;
-         end if;
+            elsif not Table.Registry.Want (Idx) then
+               Table.Registry.Set_State (Idx, Types.Stopped);
+               Output.Svc_Line (Svc, "stopped on request", "stop");
+               Count := 0;
 
-         --  Keep only crashes inside the window, then record this one.
-         Now := Ada.Real_Time.Clock;
-         declare
-            Kept : Natural := 0;
-         begin
-            for I in 1 .. Count loop
-               if Ada.Real_Time.To_Duration (Now - Stamps (I)) < Types.Crash_Window then
-                  Kept := Kept + 1;
-                  Stamps (Kept) := Stamps (I);
+            elsif Svc.Lives = Types.Never
+              or else (Svc.Lives = Types.On_Failure and then Code = 0)
+            then
+               Table.Registry.Set_Want (Idx, False);
+               Table.Registry.Set_State (Idx, Types.Finished);
+               Output.Svc_Line (Svc, "will not be restarted (lives: "
+                                & Types.Lives_Name (Svc.Lives) & ")", "oneshot");
+
+            else
+               --  Keep only crashes inside the window, then record this one.
+               Now := Ada.Real_Time.Clock;
+               declare
+                  Kept : Natural := 0;
+               begin
+                  for I in 1 .. Count loop
+                     if Ada.Real_Time.To_Duration (Now - Stamps (I)) < Types.Crash_Window then
+                        Kept := Kept + 1;
+                        Stamps (Kept) := Stamps (I);
+                     end if;
+                  end loop;
+                  Count := Kept;
+               end;
+               Count := Count + 1;
+               Stamps (Count) := Now;
+
+               if Count > Types.Crash_Limit then
+                  Table.Registry.Set_Want (Idx, False);
+                  Table.Registry.Set_State (Idx, Types.Given_Up);
+                  Output.Svc_Line (Svc, "crashed " & Types.Img (Types.Crash_Limit)
+                                   & " times in 60s, giving up", "giveup");
+               else
+                  --  Cooldown doubles with each crash, capped at Max_Backoff.
+                  Wait := Svc.Cooldown;
+                  for K in 2 .. Count loop
+                     exit when Wait >= Types.Max_Backoff;
+                     Wait := Wait * 2;
+                  end loop;
+                  if Wait > Types.Max_Backoff then
+                     Wait := Types.Max_Backoff;
+                  end if;
+
+                  Table.Registry.Set_State (Idx, Types.Cooling);
+                  Output.Svc_Line (Svc, "restarting in " & Types.Img (Wait) & "s", "restart");
+
+                  declare
+                     Resume : constant Ada.Real_Time.Time :=
+                       Ada.Real_Time.Clock + Ada.Real_Time.To_Time_Span (Duration (Wait));
+                  begin
+                     while Ada.Real_Time.Clock < Resume
+                       and then Table.Registry.Want (Idx)
+                       and then not Table.Registry.Stopping
+                     loop
+                        delay 0.1;
+                     end loop;
+                  end;
                end if;
-            end loop;
-            Count := Kept;
-         end;
-         Count := Count + 1;
-         Stamps (Count) := Now;
-
-         if Count > Types.Crash_Limit then
-            Output.Svc_Line (Svc, "crashed " & Types.Img (Types.Crash_Limit)
-                             & " times in 60s, giving up", "giveup");
-            exit Main_Loop;
+            end if;
          end if;
-
-         --  Cooldown doubles with each crash, capped at Max_Backoff.
-         Wait := Svc.Cooldown;
-         for K in 2 .. Count loop
-            exit when Wait >= Types.Max_Backoff;
-            Wait := Wait * 2;
-         end loop;
-         if Wait > Types.Max_Backoff then
-            Wait := Types.Max_Backoff;
-         end if;
-
-         Output.Svc_Line (Svc, "restarting in " & Types.Img (Wait) & "s", "restart");
-
-         declare
-            Resume : constant Ada.Real_Time.Time :=
-              Ada.Real_Time.Clock + Ada.Real_Time.To_Time_Span (Duration (Wait));
-         begin
-            while Ada.Real_Time.Clock < Resume and then not Table.Registry.Stopping loop
-               delay 0.1;
-            end loop;
-         end;
       end loop Main_Loop;
    end Worker;
 

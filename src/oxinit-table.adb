@@ -62,6 +62,22 @@ package body Oxinit.Table is
       function Stopping return Boolean is
         (Stop_Flag);
 
+      procedure Set_Want (Idx : Positive; Value : Boolean) is
+      begin
+         Wants (Idx) := Value;
+      end Set_Want;
+
+      function Want (Idx : Positive) return Boolean is
+        (Wants (Idx));
+
+      procedure Set_State (Idx : Positive; S : Types.Run_State) is
+      begin
+         States (Idx) := S;
+      end Set_State;
+
+      function State_Of (Idx : Positive) return Types.Run_State is
+        (States (Idx));
+
    end Registry;
 
 end Oxinit.Table;

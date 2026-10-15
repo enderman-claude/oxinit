@@ -3,10 +3,11 @@ project Oxinit_Prj is
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
    for Exec_Dir use "bin";
-   for Main use ("oxinit_main.adb");
+   for Main use ("oxinit_main.adb", "oxictl_main.adb");
 
    package Builder is
       for Executable ("oxinit_main.adb") use "oxinit";
+      for Executable ("oxictl_main.adb") use "oxictl";
    end Builder;
 
    package Compiler is
