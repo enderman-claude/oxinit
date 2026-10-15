@@ -2,46 +2,59 @@
 
 A PID 1 init that is production ready and not production ready at the same time.
 
-It works. It is predictable. It dresses like it hasn't slept since the Gold Rush update.
+It works. It is predictable. It requires you to type a lot.
 
 ## What it does
 
 - Runs as PID 1 and reaps zombies.
-- Starts every service from `/etc/oxinit/services.json`.
-- Restarts crashing services with exponential backoff (2s, 4s, 8s, capped at 30s).
-- Gives up after 5 crashes in 60 seconds. Soldiers rocket-jump back, but there are limits.
-- On SIGTERM or SIGINT, asks services to leave, escalates to SIGKILL after 10 seconds, exits.
+- One thread per service, plus one reaper thread that owns `waitpid`.
+- Restarts crashing services with backoff (base delay per service, doubled each crash, capped at 30s).
+- Gives up after 5 crashes in 60 seconds.
+- On SIGTERM or SIGINT, sends each service its own stop signal, waits its stop timeout, then SIGKILLs anything left.
 
 ## What it does not do
 
 - Dependency ordering. Everything starts at once, like a Meet the Team reel with no cuts.
-- Log rotation. Logs are stdout, living their best unbounded life.
-- Cgroups, socket activation, or anything else serious. Simplicity is a feature. Allegedly.
+- Log rotation. Logs are files or stdout, living their best unbounded life.
+- Cgroups, socket activation, or anything else serious.
 
-## The memeunit
+## Config: no defaults, twelve fields, one stack
 
-The memes live in `memeunit/memeunit.c`, compiled into `libmemeunit.so` and loaded at boot. oxinit refuses to start without it. The memes are load-bearing.
+Config lives in `/etc/oxinit/services.fs` and is written in a small stack language. You push values, then say `service`. Each service needs exactly 12 values, in this order:
 
-Each event key picks a line from its table by hashing the service name, so the same service always gets the same joke. Predictable chaos. Build with `make` in `memeunit/`.
+| # | Field         | Type                                 | Notes                                     |
+|---|---------------|--------------------------------------|-------------------------------------------|
+| 1 | name          | string                               | unique, non-empty                         |
+| 2 | exec          | string                               | absolute path, no PATH lookup             |
+| 3 | args          | string                               | split with shell rules, becomes argv[1:]  |
+| 4 | cwd           | string                               | absolute path                             |
+| 5 | user          | string                               | must exist                                |
+| 6 | group         | string                               | must exist                                |
+| 7 | env           | string                               | `KEY=VALUE` pairs, `""` for an empty env |
+| 8 | restart       | `always` / `never` / `on-failure`    |                                           |
+| 9 | backoff       | integer                              | base seconds, `0` for none                |
+| 10 | stop_signal  | string                               | e.g. `"TERM"`                             |
+| 11 | stop_timeout | integer                              | seconds before SIGKILL                    |
+| 12 | log          | string                               | absolute path, or `"-"` for stdout        |
 
-## Config
+Example:
 
-```json
-{
-  "services": [
-    {"name": "web", "command": ["/usr/bin/myserver", "--port", "8080"], "restart": true},
-    {"name": "backup", "command": ["/usr/local/bin/backup.sh"], "restart": false}
-  ]
-}
+```
+\ comments start with backslash-space
+"web" "/usr/bin/myserver" "--port 8080" "/srv/web" "www" "www" "" "always" 2 "TERM" 10 "/var/log/web.log" service
 ```
 
-`restart: false` makes a run-once service, like a Sniper with one clean headshot.
+Literals are double-quoted strings or bare integers. Anything else is an error that tells you the line number.
+
+## Memes
+
+The memes live in `memeunit/memeunit.c`, compiled into `libmemeunit.so` and loaded at boot. oxinit refuses to start without it. Each event key picks a line by hashing the service name, so the same service always gets the same joke. Build with `make -C memeunit`.
 
 ## Running
 
 ```sh
 make -C memeunit
-python3 oxinit.py etc/services.json
+python3 oxinit.py etc/services.fs
 ```
 
 As PID 1 in a container or VM, pass it as the init program.
@@ -52,7 +65,7 @@ As PID 1 in a container or VM, pass it as the init program.
 ./test.sh
 ```
 
-Runs the integration test inside a fresh PID namespace, so nothing outside the sandbox gets hurt.
+Runs config validation tests, then an integration test inside a fresh PID namespace.
 
 ## References
 
@@ -62,7 +75,7 @@ Runs the integration test inside a fresh PID namespace, so nothing outside the s
 
 > "Have you tried turning it off and on again?" Engineer, and oxinit, in the logs.
 
-> "uwu, your service crashed." Furry-approved error reporting.
+> "No defaults here, sweetie." The config parser, to your 11th field.
 
 ## License
 

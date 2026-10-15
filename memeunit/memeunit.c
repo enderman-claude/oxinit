@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define N_KINDS 8
+#define N_KINDS 9
 
 struct meme_set {
     const char *key;
@@ -69,6 +69,14 @@ static const struct meme_set table[N_KINDS] = {
         "Not leaving voluntarily, so SIGKILL it is. Spy: sorry about your back.",
         "It refused to leave. The Soldier is going full rocket-jump on it.",
         "Escalating. Like a meme in a comment section, it is now dead.",
+    }},
+    { "config", {
+        "Your config is cooked. Read the error, not the vibes.",
+        "Parse error. Heavy looked at your config and ate a sandvich instead.",
+        "Config rejected. Even the Spy can't get past a missing field.",
+        "Syntax says no. Sentry will not fire until you fix it.",
+        "Something's wrong with the stack, uwu. Please fix and retry.",
+        "No defaults here, sweetie. Every field has to be spelled out.",
     }},
 };
 
