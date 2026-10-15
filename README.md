@@ -69,7 +69,7 @@ A config file is a list of services. Each service starts with `@name` and has ex
 | `!loadout` | Environment variables | `KEY=VALUE` pairs separated by spaces. `-` for an empty environment. |
 | `!lives` | Restart policy | `always`, `never`, or `on-failure` (restart only after a nonzero exit). No `-`. |
 | `!cooldown` | Base restart delay | Whole seconds with `s`, such as `2s`. Doubles after each crash, capped at 30s. `0s` for no delay. |
-| `!eviction-notice` | Signal sent on shutdown | Signal name without `SIG`, such as `TERM` or `INT`. No `-`. |
+| `!eviction-notice` | Signal sent on shutdown | Name without `SIG`: `HUP`, `INT`, `QUIT`, `USR1`, `USR2`, or `TERM`. No `-`. |
 | `!grace` | Time before forced removal | Whole seconds with `s`, such as `10s`. After this, the process gets SIGKILL. |
 | `!scoreboard` | Log destination | Absolute path, or `-` for stdout. |
 | `!amiafurry` | Furry flag | `true` or `false`. No `-`. No runtime effect. |
@@ -97,22 +97,49 @@ Color is used only when stdout is a terminal. Piped or saved output keeps the pr
 
 Plain `oxinit:` lines (boot, shutdown, config errors) have no mood and no color.
 
+## Building
+
+oxinit is written in Ada (GNAT). The meme unit is C and is linked in as a static archive.
+
+```sh
+make -C memeunit
+gprbuild -P oxinit_prj.gpr
+```
+
+The binary is written to `bin/oxinit`. There are no runtime dependencies.
+
 ## Running
 
 Check a config without starting anything:
 
 ```sh
-python3 oxinit.py --check etc/services.oxi
+./bin/oxinit --check etc/services.oxi
 ```
 
 Run services:
 
 ```sh
-make -C memeunit
-python3 oxinit.py etc/services.oxi
+./bin/oxinit etc/services.oxi
 ```
 
 As PID 1 in a container or VM, pass the config as the init program's argument. The default config path is `/etc/oxinit/services.oxi`.
+
+## Layout
+
+| Unit | Role |
+|---|---|
+| `oxinit_main.adb` | Entry point, startup, shutdown |
+| `oxinit-parser` | Reads `@` and `!` lines into raw services |
+| `oxinit-validate` | Checks every field and builds a service |
+| `oxinit-checks` | Shared field helpers: durations, loadout, errors |
+| `oxinit-shell` | POSIX-style splitting for `!incant` |
+| `oxinit-config` | Loads a file into the service list |
+| `oxinit-launch` | Prepares exec data and runs in the forked child |
+| `oxinit-table` | Pid registry and per-service mailboxes (protected objects) |
+| `oxinit-worker` | One task per service: spawn, wait, restart policy |
+| `oxinit-reaping` | The only task that calls `waitpid` |
+| `oxinit-output`, `oxinit-moods`, `oxinit-memes` | Themed output and the compiled-in memeunit |
+| `oxinit-posix`, `oxinit-accounts`, `oxinit-signals` | POSIX bindings, user lookup, signal handling |
 
 ## Testing
 
@@ -120,7 +147,7 @@ As PID 1 in a container or VM, pass the config as the init program's argument. T
 ./test.sh
 ```
 
-Runs one check per rule above, then an integration test inside a fresh PID namespace.
+Builds everything, runs one check per rule above, then runs an integration test inside a fresh PID namespace.
 
 ## License
 

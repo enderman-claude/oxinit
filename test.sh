@@ -41,16 +41,17 @@ EOF
 }
 
 # Run --check on a file, capture output and exit code.
-run_check() { OUT=$(python3 oxinit.py --check "$1" 2>&1); RC=$?; }
+run_check() { OUT=$(./bin/oxinit --check "$1" 2>&1); RC=$?; }
 
 echo "Running oxinit tests. Hold your breath, MEDIC is on standby."
-make -s -C memeunit && check "memeunit builds with -Werror" "[ -f memeunit/libmemeunit.so ]"
+make -s -C memeunit && check "memeunit builds with -Werror" "[ -f memeunit/libmemeunit.a ]"
+gprbuild -P oxinit_prj.gpr -q >/dev/null 2>&1 && check "oxinit builds with gprbuild" "[ -x bin/oxinit ]"
 
 base_svc > "$TMP/base.oxi"
 run_check "$TMP/base.oxi"
 check "a complete service passes" "[ \$RC -eq 0 ]"
 
-check "bundled example config passes" "python3 oxinit.py --check etc/services.oxi >/dev/null 2>&1"
+check "bundled example config passes" "./bin/oxinit --check etc/services.oxi >/dev/null 2>&1"
 
 base_svc | sed 's/^!mood .*/!mood nope/' > "$TMP/t.oxi"; run_check "$TMP/t.oxi"
 check "unknown mood is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | grep -q 'unknown mood'"
@@ -123,9 +124,9 @@ check "a field before any service is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\"
 
 # Integration: run as PID 1 in a fresh PID namespace, then send SIGTERM.
 LOG="$TMP/run.log"
-(unshare -fp --mount-proc python3 oxinit.py etc/services.oxi > "$LOG" 2>&1 &)
+(unshare -fp --mount-proc ./bin/oxinit etc/services.oxi > "$LOG" 2>&1 &)
 sleep 6
-INIT=$(pgrep -f "^python3 oxinit.py etc/services.oxi" | head -1)
+INIT=$(pgrep -f "^./bin/oxinit etc/services.oxi" | head -1)
 check "init runs as a process in a fresh PID namespace" "[ -n \"\$INIT\" ]"
 [ -n "$INIT" ] && kill -TERM "$INIT"
 sleep 4
