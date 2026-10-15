@@ -6,3 +6,4 @@ memeunit/*.so
 obj/
 bin/
 build/
+memeunit/test_memeunit
