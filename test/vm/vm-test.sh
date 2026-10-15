@@ -9,6 +9,7 @@
 #   sh test/vm/vm-test.sh                       # boot with test/vm/interactive.oxi
 #   sh test/vm/vm-test.sh --services FILE       # your own services file
 #   sh test/vm/vm-test.sh --skip-build          # reuse the last oxinit build
+#   sh test/vm/vm-test.sh --run-tests          # also run ./test.sh before booting
 #   sh test/vm/vm-test.sh --mem 1024 --cpus 2 --kernel /path/to/bzImage
 #
 # Log in as root (no password). Services: oxictl status. Shut the VM down from a
@@ -23,6 +24,7 @@ MEM=${VM_MEM:-1024}
 CPUS=${VM_CPUS:-2}
 KERNEL=${KERNEL:-}
 SKIP_BUILD=0
+RUN_TESTS=0
 ROOT=build/vm/rootfs
 IMAGE=build/vm/vm-test.cpio.gz
 
@@ -35,6 +37,7 @@ while [ $# -gt 0 ]; do
     --cpus)       CPUS=$2; shift 2 ;;
     --kernel)     KERNEL=$2; shift 2 ;;
     --skip-build) SKIP_BUILD=1; shift ;;
+    --run-tests)  RUN_TESTS=1; shift ;;
     -h|--help)    sed -n '2,15p' "$0"; exit 0 ;;
     *)            die "unknown option $1 (try --help)" ;;
   esac
@@ -64,8 +67,18 @@ NSS_FILES=$(ldconfig -p | awk '$1 == "libnss_files.so.2" && /x86-64/ { print $NF
 # --- Build oxinit -----------------------------------------------------------
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
-  make -s -C memeunit
+  make -s -C memeunit || die "memeunit build failed"
+  make -s -C memeunit test_memeunit || die "memeunit test build failed"
   gprbuild -P oxinit_prj.gpr -q || die "oxinit build failed"
+  bash -n test.sh || die "test.sh has a syntax error"
+  echo "vm-test: built oxinit and all test binaries"
+fi
+
+# Optional: run the whole suite before booting. Warnings only, so a failing
+# test does not stop the VM from starting.
+if [ "$RUN_TESTS" -eq 1 ]; then
+  make -s -C memeunit test || echo "vm-test: memeunit tests failed" >&2
+  ./test.sh || echo "vm-test: test.sh had failures, booting anyway" >&2
 fi
 [ -x bin/oxinit ] && [ -x bin/oxictl ] || die "bin/oxinit or bin/oxictl missing; run without --skip-build"
 
@@ -257,6 +270,6 @@ echo "vm-test: log in as root. Ctrl-A then X quits QEMU."
 exec qemu-system-x86_64 \
   -accel kvm:tcg -cpu max \
   -m "$MEM" -smp "$CPUS" \
-  -nographic -no-reboot \
+  -nographic -serial mon:stdio -no-reboot \
   -kernel "$KERNEL" -initrd "$IMAGE" \
   -append "console=ttyS0 panic=-1 init=/init loglevel=4"
