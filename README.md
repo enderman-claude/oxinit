@@ -97,6 +97,12 @@ Color is used only when stdout is a terminal. Piped or saved output keeps the pr
 
 Plain `oxinit:` lines (boot, shutdown, config errors) have no mood and no color.
 
+### Memes
+
+Service lines end with a meme. The line is picked by hashing the service name, mood and, for furry services, the declared fursona species. The same service always gets the same line for the same event.
+
+If a furry service's `!fursona-species` contains `proto` (protogen), `wolf`, `fox` or `dragon` (case-insensitive), that service draws from a short list of lines written for that species. Any other species, and every non-furry service, uses the generic pool.
+
 ## Building
 
 oxinit is written in Ada (GNAT). The meme unit is C and is linked in as a static archive.

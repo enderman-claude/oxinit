@@ -45,11 +45,16 @@ package body Oxinit.Output is
       Name : constant String := US.To_String (Svc.Name);
       M    : constant Types.Mood_Kind := Svc.Mood;
       Line : constant String := Moods.Prefix (M) & " " & Name & " " & Text;
+      --  Seed: name, mood and species, so each service gets a stable line.
+      --  Species is only used for furry services; everyone else gets the generic pool.
+      Species : constant String :=
+        (if Svc.Furry then US.To_String (Svc.Fursona.Species) else "");
+      Seed    : constant String := Name & "|" & Types.Mood_Kind'Image (M);
    begin
       if Kind = "" then
          Console.Emit (Styled (Line, Moods.Style (M)));
       else
-         Console.Emit (Styled (Line & " | " & Memes.Pick (Kind, Name), Moods.Style (M)));
+         Console.Emit (Styled (Line & " | " & Memes.Pick (Kind, Seed, Species), Moods.Style (M)));
       end if;
    end Svc_Line;
 

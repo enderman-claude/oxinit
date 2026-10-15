@@ -13,7 +13,13 @@ memeunit.o: memeunit.c
 libmemeunit.so: memeunit.c
 	$(CC) $(CFLAGS) -shared -o $@ $<
 
-clean:
-	rm -f libmemeunit.a libmemeunit.so memeunit.o
+test: test_memeunit
+	./test_memeunit
 
-.PHONY: all clean
+test_memeunit: test_memeunit.c memeunit.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+clean:
+	rm -f libmemeunit.a libmemeunit.so memeunit.o test_memeunit
+
+.PHONY: all clean test

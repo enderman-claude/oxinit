@@ -45,6 +45,7 @@ run_check() { OUT=$(./bin/oxinit --check "$1" 2>&1); RC=$?; }
 
 echo "Running oxinit tests. Hold your breath, MEDIC is on standby."
 make -s -C memeunit && check "memeunit builds with -Werror" "[ -f memeunit/libmemeunit.a ]"
+check "memeunit picks: species lines, stable seeds, generic fallback" "make -s -C memeunit test >/dev/null 2>&1"
 gprbuild -P oxinit_prj.gpr -q >/dev/null 2>&1 && check "oxinit builds with gprbuild" "[ -x bin/oxinit ]"
 
 base_svc > "$TMP/base.oxi"
