@@ -182,3 +182,13 @@ The boot log is in `build/vm/boot.log`.
 ## License
 
 Do what you want. If it eats your PID 1, that's on you.
+
+## Manual testing in a VM
+
+`test/vm/run-manual.sh` builds the same image as `test-vm.sh` and boots it with the serial console attached to your terminal. There is no timeout. The guest runs `test/vm/manual.oxi`, which starts a heartbeat service and a shell, so you can use `oxictl` by hand. Press Ctrl-A then X to quit QEMU.
+
+```sh
+sh test/vm/run-manual.sh
+```
+
+Requirements and the `KERNEL` override are the same as for the automated VM test.

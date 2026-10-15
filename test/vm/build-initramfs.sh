@@ -51,7 +51,7 @@ chmod 755 "$ROOT/init"
 
 cp test/vm/selftest.sh "$ROOT/usr/lib/oxinit/selftest.sh"
 chmod 755 "$ROOT/usr/lib/oxinit/selftest.sh"
-cp test/vm/services.oxi "$ROOT/etc/oxinit/services.oxi"
+cp "${SERVICES:-test/vm/services.oxi}" "$ROOT/etc/oxinit/services.oxi"
 
 # Console nodes, so the kernel has stdio for PID 1 even before devtmpfs is up.
 if [ "$(id -u)" -eq 0 ]; then

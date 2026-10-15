@@ -1,6 +1,7 @@
 #!/bin/sh
 # Boots build/vm/initramfs.cpio.gz in QEMU. Uses KVM when /dev/kvm is usable,
 # otherwise software emulation (slower, same result).
+#   VM_INTERACTIVE=1  no timeout; the serial console is your terminal (Ctrl-A X quits QEMU)
 set -eu
 cd "$(dirname "$0")/../.."
 
@@ -16,7 +17,11 @@ fi
 
 # -no-reboot: a guest reboot exits QEMU instead of looping.
 # panic=-1: a kernel panic reboots at once, which -no-reboot turns into an exit.
-exec timeout "${VM_TIMEOUT:-300}" qemu-system-x86_64 $ACCEL -m 512 -smp 1 \
-  -nographic -no-reboot \
+set -- $ACCEL -m 512 -smp 1 -nographic -no-reboot \
   -kernel "$KERNEL" -initrd build/vm/initramfs.cpio.gz \
   -append "console=ttyS0 panic=-1 init=/init loglevel=4"
+
+if [ -n "${VM_INTERACTIVE:-}" ]; then
+  exec qemu-system-x86_64 "$@"
+fi
+exec timeout "${VM_TIMEOUT:-300}" qemu-system-x86_64 "$@"

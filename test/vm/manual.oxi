@@ -1,0 +1,38 @@
+# Services for manual testing. Same as services.oxi, but with a shell on the
+# console and no self-test, so the machine stays up until you shut it down.
+
+@heartbeat
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'while true; do echo alive; sleep 2; done'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            2s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@shell
+!mood                chill
+!summon              /bin/sh
+!incant              -
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               5s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
