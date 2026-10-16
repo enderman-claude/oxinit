@@ -63,7 +63,10 @@ These rules concern the target's state, not whether the underlying service shoul
 - The unit waits for `X` to resolve: it boots after `X` if `X` is going to start, and waits at `X`'s ordering point if `X` is not yet known.
 - If `X` is a target or a unit ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
 - It does not couple lifetimes. If `X` dies, the unit keeps running. `X` is not restarted by `!likes`.
-- If oxinit already knows `X` will not start, the unit does not wait for it.
+- oxinit knows `X` will not start in three cases, and then the unit does not wait for it:
+  1. `X` is not configured.
+  2. `X` is disabled.
+  3. `X` is configured, but its start conditions have been decided to be impossible.
 
 **`!obsessive` (official definition).** `!obsessive X` adds no rules beyond ordering.
 
