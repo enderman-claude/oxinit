@@ -58,17 +58,14 @@ These rules concern the target's state, not whether the underlying service shoul
 | `!likes`       | Ordering: waits for the referenced unit's place in the graph to resolve, unless oxinit already knows it will not start. No lifetime coupling. |
 | `!obsessive`   | Ordering exactly as `!laterthan`, plus a lifetime coupling to the referenced unit (see below). |
 
-**`!likes` (official definition).** `!likes X` adds ordering and nothing else.
+**`!likes` (official definition).** `!likes X` adds ordering and nothing else. It leans toward trying anyway.
 
-- The unit waits for `X` to resolve: it boots after `X` if `X` is going to start, and waits at `X`'s ordering point if `X` is not yet known.
-- If `X` is a target or a unit ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
-- It does not couple lifetimes. If `X` dies, the unit keeps running. `X` is not restarted by `!likes`.
-- oxinit knows `X` will not start in three cases, and then the unit does not wait for it:
-  1. `X` is not configured.
-  2. `X` is disabled.
-  3. `X` is configured, but its start conditions have been decided to be impossible. A start condition is impossible when either:
-     - an `!obsessive` dependency has failed, or
-     - a target it needs can no longer be made, because no remaining unit can make it.
+- The unit waits for `X` to resolve, as far as the graph says it will: it boots after `X` if `X` is going to start. If `X` is a target, or is ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
+- If oxinit predicts `X` will fail, the unit still tries to start. The prediction is recorded, but it does not block the unit.
+- oxinit knows `X` will not start in three cases: `X` is not configured, `X` is disabled, or `X`'s start conditions are impossible. In those cases the unit does not wait for `X`, and it still tries to start.
+- Impossible start conditions are: a failed `!obsessive` dependency, or a target that no remaining unit can make.
+- Units are not serialised. Predictions are best-effort and can be stale by the time they are used. A race between a prediction and the real outcome is accepted, and no lock is taken across units to prevent it.
+- It does not couple lifetimes. If `X` dies, the unit keeps running. `!likes` never restarts `X`.
 
 **`!obsessive` (official definition).** `!obsessive X` adds no rules beyond ordering.
 
