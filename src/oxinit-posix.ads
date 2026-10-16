@@ -33,6 +33,10 @@ package Oxinit.Posix is
    function Setsid return C_Int;
    pragma Import (C, Setsid, "setsid");
 
+   --  setgroups (0, NULL) clears every supplementary group.
+   function Setgroups (Size : Interfaces.C.size_t; List : System.Address) return C_Int;
+   pragma Import (C, Setgroups, "setgroups");
+
    function Setuid (Uid : C_Int) return C_Int;
    pragma Import (C, Setuid, "setuid");
 
