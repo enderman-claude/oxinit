@@ -66,7 +66,9 @@ These rules concern the target's state, not whether the underlying service shoul
 - oxinit knows `X` will not start in three cases, and then the unit does not wait for it:
   1. `X` is not configured.
   2. `X` is disabled.
-  3. `X` is configured, but its start conditions have been decided to be impossible.
+  3. `X` is configured, but its start conditions have been decided to be impossible. A start condition is impossible when either:
+     - an `!obsessive` dependency has failed, or
+     - a target it needs can no longer be made, because no remaining unit can make it.
 
 **`!obsessive` (official definition).** `!obsessive X` adds no rules beyond ordering.
 
