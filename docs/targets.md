@@ -56,14 +56,19 @@ These rules concern the target's state, not whether the underlying service shoul
 | `!laterthan`   | Establishes ordering after another unit, without starting it.                                                                          |
 | `!earlierthan` | Establishes ordering before another unit.                                                                                              |
 | `!likes`       | Attempts to start the referenced service or unit, but does not restart it if it dies.                                                  |
-| `!obsessive`   | Couples the dependent to the referenced service. If the referenced service dies, the dependent is killed; if it comes back, the dependent restarts. |
+| `!obsessive`   | Ordering exactly as `!laterthan`, plus a lifetime coupling to the referenced unit (see below). |
 
-**`!obsessive` in detail.** Suppose service `b` is `!obsessive` on service `a`.
+**`!obsessive` (official definition).** `!obsessive X` adds no rules beyond ordering.
 
-- If `a` dies, `b` is killed automatically. The recorded reason for `b` is `dependency failed: a`, so `a` is the one blamed.
-- When `a` comes back, `b` restarts too.
+- It orders the unit after `X`, exactly as `!laterthan X` does.
+- It couples the unit's lifetime to `X`. If `X` dies, the unit is killed, and its recorded reason is `dependency failed: X`. When `X` comes back, the unit restarts.
+- A unit boots once every ordering condition on it is satisfied, including its `!obsessive` conditions.
 
-`!obsessive` never restarts a target. A target is not a process, so it cannot be restarted. A target that becomes inactive must regain activation through its own conditions.
+For example, if `@a` is `!obsessive` on `@c`, and `@c` is `!laterthan #b`, then `@a` boots after `#b` too, because `@c` does and `@a` must wait for `@c`.
+
+If the referenced unit is a target, the coupling does nothing, because a target is not a process. The unit boots only once that target is reached.
+
+`!obsessive` never restarts a target. A target that becomes inactive must regain activation through its own conditions.
 
 ## 5. Target completion and service counts
 
