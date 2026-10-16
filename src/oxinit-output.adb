@@ -10,7 +10,6 @@ package body Oxinit.Output is
 
    Esc      : constant Character := Character'Val (27);
    Color_On : Boolean := False;
-   Booted   : Boolean := False;
 
    --  Serialises console writes so lines from different tasks never interleave.
    protected Console is
@@ -24,6 +23,47 @@ package body Oxinit.Output is
          Ada.Text_IO.Flush (Ada.Text_IO.Standard_Output);
       end Emit;
    end Console;
+
+   --  #hadmycoffee. Counts services that have not yet made their first attempt.
+   protected Boot is
+      procedure Expect (N : Natural);
+      procedure Attempt_Done;
+      procedure Force;
+      function Done return Boolean;
+   private
+      Pending : Natural := 0;
+      Reached : Boolean := False;
+   end Boot;
+
+   protected body Boot is
+      procedure Expect (N : Natural) is
+      begin
+         Pending := N;
+         if N = 0 then
+            Reached := True;
+         end if;
+      end Expect;
+
+      procedure Attempt_Done is
+      begin
+         if Pending > 0 then
+            Pending := Pending - 1;
+         end if;
+         if Pending = 0 then
+            Reached := True;
+         end if;
+      end Attempt_Done;
+
+      procedure Force is
+      begin
+         Reached := True;
+      end Force;
+
+      function Done return Boolean is
+      begin
+         return Reached;
+      end Done;
+   end Boot;
 
    Log_File  : Ada.Text_IO.File_Type;
    Log_Ready : Boolean := False;   --  only touched inside protected Log
@@ -83,7 +123,7 @@ package body Oxinit.Output is
    procedure Route (Plain, Shown : String; Important : Boolean) is
       Written : Boolean;
    begin
-      if not Booted then
+      if not Boot.Done then
          Console.Emit (Shown);
          return;
       end if;
@@ -99,10 +139,25 @@ package body Oxinit.Output is
       Color_On := On;
    end Set_Color;
 
-   procedure Set_Booted is
+   procedure Expect_Boot (Count : Natural) is
    begin
-      Booted := True;
-   end Set_Booted;
+      Boot.Expect (Count);
+   end Expect_Boot;
+
+   procedure First_Attempt_Done is
+   begin
+      Boot.Attempt_Done;
+   end First_Attempt_Done;
+
+   procedure Force_Boot_Done is
+   begin
+      Boot.Force;
+   end Force_Boot_Done;
+
+   function Boot_Done return Boolean is
+   begin
+      return Boot.Done;
+   end Boot_Done;
 
    procedure Olog (Text : String) is
       Line : constant String := "oxinit: " & Text;

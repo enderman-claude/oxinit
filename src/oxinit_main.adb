@@ -138,13 +138,29 @@ begin
    Oxinit.Launch.Prepare;
 
    Count := Natural (Service_Vectors.Length (Services));
+   Oxinit.Output.Expect_Boot (Count);   --  before any worker can report
    for I in 1 .. Count loop
       Workers (I) := new Oxinit.Worker.Worker (I);
    end loop;
 
    Oxinit.Ctl_Server.Server.Start;
    Oxinit.Output.Olog ("loaded" & Natural'Image (Count) & " service(s) from " & Config_Path (1));
-   Oxinit.Output.Set_Booted;   --  boot is done: routine lines go to the log from now on
+   --  Wait for #hadmycoffee: every service has made its first start attempt.
+   --  Give up after 10 seconds and go quiet anyway, so a stuck service cannot
+   --  keep the console noisy forever.
+   declare
+      Waited : Natural := 0;
+   begin
+      while not Oxinit.Output.Boot_Done and then Waited < 100 loop
+         delay 0.1;
+         Waited := Waited + 1;
+      end loop;
+      if not Oxinit.Output.Boot_Done then
+         Oxinit.Output.Olog_Important ("#hadmycoffee timed out, going quiet");
+         Oxinit.Output.Force_Boot_Done;
+      end if;
+   end;
+   Oxinit.Output.Olog_Important ("#hadmycoffee reached, routine lines go to the log");
 
    while not Oxinit.Signals.Stop_Requested loop
       delay 0.2;

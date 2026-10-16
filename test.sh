@@ -157,6 +157,7 @@ sleep 4
 
 ALL="$LOG $OXINIT_LOG"
 check "all services start" "grep -q 'heartbeat started' $ALL && grep -q 'flaky started' $ALL"
+check "boot lines reach the console before #hadmycoffee" "grep -q 'heartbeat started' '$LOG' && grep -q 'flaky started' '$LOG'"
 check "crashing service restarts with cooldown" "grep -q 'flaky restarting in' '$OXINIT_LOG'"
 check "lives: never service is not restarted" "grep -q 'oneshot will not be restarted' '$OXINIT_LOG' && ! grep -q 'oneshot restarting' $ALL"
 check "shutdown sends the eviction notice" "grep -q 'heartbeat received eviction notice' '$LOG'"

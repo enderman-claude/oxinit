@@ -14,8 +14,14 @@ package Oxinit.Output is
    --  Colors never go into the log file.
    procedure Set_Color (On : Boolean);
 
-   --  Call once boot is complete. From then on, routine lines go to the log.
-   procedure Set_Booted;
+   --  #hadmycoffee: the boot phase ends once every service has made its first
+   --  start attempt. Expect_Boot is called once with the number of services,
+   --  before any worker starts. Each worker calls First_Attempt_Done exactly once.
+   --  Until then, all lines go to the console. Force_Boot_Done is the timeout escape.
+   procedure Expect_Boot (Count : Natural);
+   procedure First_Attempt_Done;
+   procedure Force_Boot_Done;
+   function Boot_Done return Boolean;
 
    --  Plain oxinit line: no mood, no color.
    procedure Olog (Text : String);

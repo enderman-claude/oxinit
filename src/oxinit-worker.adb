@@ -36,6 +36,16 @@ package body Oxinit.Worker is
       Code    : Integer;
       Now     : Ada.Real_Time.Time;
       Wait    : Natural;
+      Counted : Boolean := False;
+
+      --  Reports this service's first start attempt to the boot counter, once.
+      procedure Count_First is
+      begin
+         if not Counted then
+            Counted := True;
+            Output.First_Attempt_Done;
+         end if;
+      end Count_First;
    begin
       Main_Loop :
       loop
@@ -44,10 +54,12 @@ package body Oxinit.Worker is
          if not Table.Registry.Want (Idx) then
             --  Down on purpose (oxictl stop, finished, or gave up). Wait for a start.
             Table.Registry.Set_State (Idx, Types.Stopped);
+            Count_First;
             Count := 0;
             delay 0.1;
          else
             Table.Registry.Spawn (Idx, Pid, Ok);
+            Count_First;
             exit Main_Loop when not Ok;
 
             if not Started then
