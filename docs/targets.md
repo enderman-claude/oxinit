@@ -2,6 +2,8 @@
 
 These are the rules agreed so far. Section 7 lists what is still open.
 
+**Reader assumptions.** Assume the reader has no prior context: no earlier conversation, no memory of past decisions, and no knowledge of the repository beyond this file. Everything needed to act on these rules is written here. If a rule is not written here, it has not been decided, and the reader should ask rather than infer it.
+
 ## 1. Target creation and ordering
 
 1. Every service must have ordering. A service must ultimately connect to a target through its dependency graph.
