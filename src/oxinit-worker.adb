@@ -59,7 +59,9 @@ package body Oxinit.Worker is
             delay 0.1;
          else
             Table.Registry.Spawn (Idx, Pid, Ok);
-            Count_First;
+            if not Ok then
+               Count_First;   --  a failed spawn prints nothing, so count it now
+            end if;
             exit Main_Loop when not Ok;
 
             if not Started then
@@ -68,6 +70,7 @@ package body Oxinit.Worker is
             end if;
             Table.Registry.Set_State (Idx, Types.Running);
             Output.Svc_Line (Svc, "started (pid " & Types.Img (Integer (Pid)) & ")", "start");
+            Count_First;   --  count only after the start line is out, so it reaches the console
 
             Table.Boxes (Idx).Get (Status);
             Code := Exit_Code (Status);
