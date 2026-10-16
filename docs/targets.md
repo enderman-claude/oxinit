@@ -60,10 +60,10 @@ These rules concern the target's state, not whether the underlying service shoul
 
 **`!likes` (official definition).** `!likes X` adds ordering and nothing else. It leans toward trying anyway.
 
-- The unit waits for `X` to resolve, as far as the graph says it will: it boots after `X` if `X` is going to start. If `X` is a target, or is ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
-- If oxinit predicts `X` will fail, the unit still tries to start. The prediction is recorded, but it does not block the unit.
-- oxinit knows `X` will not start in three cases: `X` is not configured, `X` is disabled, or `X`'s start conditions are impossible. In those cases the unit does not wait for `X`, and it still tries to start.
-- Impossible start conditions are: a failed `!obsessive` dependency, or a target that no remaining unit can make.
+- A unit waits for `X` by default. It boots after `X` if `X` is going to start. If `X` is a target, or is ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
+- A unit stops waiting only when oxinit is 100% certain that every opportunity for `X` to start is gone. oxinit is certain in three cases: `X` is not configured, `X` is disabled, or `X`'s start conditions are impossible (a failed `!obsessive` dependency, or a target that no remaining unit can make).
+- A prediction that `X` will fail is not certainty. The unit keeps waiting, and the prediction is recorded.
+- Once the unit stops waiting, it tries to start.
 - Units are not serialised. Predictions are best-effort and can be stale by the time they are used. A race between a prediction and the real outcome is accepted, and no lock is taken across units to prevent it.
 - It does not couple lifetimes. If `X` dies, the unit keeps running. `!likes` never restarts `X`.
 
