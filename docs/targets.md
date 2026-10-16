@@ -55,8 +55,15 @@ These rules concern the target's state, not whether the underlying service shoul
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `!laterthan`   | Establishes ordering after another unit, without starting it.                                                                          |
 | `!earlierthan` | Establishes ordering before another unit.                                                                                              |
-| `!likes`       | Attempts to start the referenced service or unit, but does not restart it if it dies.                                                  |
+| `!likes`       | Ordering: waits for the referenced unit's place in the graph to resolve, unless oxinit already knows it will not start. No lifetime coupling. |
 | `!obsessive`   | Ordering exactly as `!laterthan`, plus a lifetime coupling to the referenced unit (see below). |
+
+**`!likes` (official definition).** `!likes X` adds ordering and nothing else.
+
+- The unit waits for `X` to resolve: it boots after `X` if `X` is going to start, and waits at `X`'s ordering point if `X` is not yet known.
+- If `X` is a target or a unit ordered after a target, the unit waits at that target. For example, if `@a` likes `@c`, and `@c` is `!laterthan #b`, then `@a` waits until `#b`, where `@c` starts.
+- It does not couple lifetimes. If `X` dies, the unit keeps running. `X` is not restarted by `!likes`.
+- If oxinit already knows `X` will not start, the unit does not wait for it.
 
 **`!obsessive` (official definition).** `!obsessive X` adds no rules beyond ordering.
 
