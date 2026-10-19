@@ -16,8 +16,9 @@ project Oxinit_Prj is
 
    package Linker is
       --  The VM image copies the shared libraries these binaries need (see test/vm).
-      --  memeunit is compiled in as a static archive.
-      for Default_Switches ("Ada") use ("memeunit/libmemeunit.a");
+      --  memeunit is compiled in as a static archive. libshard (vendor/shard) reads and
+      --  converts SHARD service binaries; build it with make -C vendor/shard build/libshard.a.
+      for Default_Switches ("Ada") use ("memeunit/libmemeunit.a", "vendor/shard/build/libshard.a");
    end Linker;
 
 end Oxinit_Prj;

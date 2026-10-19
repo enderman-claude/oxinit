@@ -1,8 +1,11 @@
 with Ada.Strings.Unbounded;
 with Interfaces.C;
 with Interfaces.C.Strings;
+with Ada.Strings.Fixed;
 with Oxinit.Config;
+with Oxinit.Output;
 with Oxinit.Posix;
+with Oxinit.Shard_Format;
 with Oxinit.Types;
 with System;
 
@@ -12,6 +15,8 @@ package body Oxinit.Launch is
    package CS renames Interfaces.C.Strings;
 
    use type Posix.C_Int;
+   use type Shard_Format.Bytes_Access;
+   use type Interfaces.C.long;
 
    type Ptr_Array is access CS.chars_ptr_array;
 
@@ -24,6 +29,7 @@ package body Oxinit.Launch is
       Envp        : Ptr_Array := null;
       Uid         : Posix.C_Int := 0;
       Gid         : Posix.C_Int := 0;
+      Broken      : Boolean := False;  --  a SHARD service that could not be staged
    end record;
 
    Prepared : array (1 .. Types.Max_Services) of Prepared_Rec;
@@ -40,6 +46,45 @@ package body Oxinit.Launch is
       return Result;
    end Make;
 
+   --  Converts a SHARD service to ELF and stages it in a memfd. On failure the service is
+   --  marked Broken and is never executed. Runs in the parent, before any fork.
+   procedure Stage_Shard (Idx : Positive; Svc : Types.Service) is
+      Elf    : Shard_Format.Bytes_Access;
+      Reason : US.Unbounded_String;
+      Name   : CS.chars_ptr;
+      Fd     : Posix.C_Int;
+      Wrote  : Interfaces.C.long;
+
+      procedure Fail (Why : String) is
+      begin
+         Output.Svc_Line (Svc, "cannot run: " & Why, Important => True);
+         Prepared (Idx).Broken := True;
+      end Fail;
+   begin
+      Shard_Format.Convert_To_Elf (US.To_String (Svc.Program), Elf, Reason);
+      if Elf = null then
+         Fail (US.To_String (Reason));
+         return;
+      end if;
+
+      Name := CS.New_String ("oxinit-shard");
+      Fd := Posix.Memfd_Create (Name, 0);
+      CS.Free (Name);
+      if Fd < 0 then
+         Fail ("memfd_create failed");
+         return;
+      end if;
+
+      Wrote := Posix.Write (Fd, Elf.all'Address, Interfaces.C.size_t (Elf'Length));
+      if Wrote /= Interfaces.C.long (Elf'Length) then
+         Fail ("could not stage the converted image");
+         return;
+      end if;
+
+      Prepared (Idx).Program := CS.New_String
+        ("/proc/self/fd/" & Ada.Strings.Fixed.Trim (Posix.C_Int'Image (Fd), Ada.Strings.Left));
+   end Stage_Shard;
+
    procedure Prepare is
       Count : constant Natural := Natural (Config.Service_Vectors.Length (Config.Services));
    begin
@@ -50,6 +95,9 @@ package body Oxinit.Launch is
          begin
             Argv.Prepend (Svc.Program);
             Prepared (I).Program := CS.New_String (US.To_String (Svc.Program));
+            if Shard_Format.Is_Shard (US.To_String (Svc.Program)) then
+               Stage_Shard (I, Svc);
+            end if;
             Prepared (I).Cwd := CS.New_String (US.To_String (Svc.Cwd));
             Prepared (I).Log := CS.New_String (US.To_String (Svc.Scoreboard));
             Prepared (I).Log_To_File := US.To_String (Svc.Scoreboard) /= "-";
@@ -67,6 +115,9 @@ package body Oxinit.Launch is
       Old : System.Address;
       pragma Unreferenced (Old);
    begin
+      if P.Broken then
+         Posix.Exit_Now (126);
+      end if;
       --  Put default signal handling back so the service can be stopped normally.
       Old := Posix.Signal (Posix.Sigterm, System.Null_Address);
       Old := Posix.Signal (Posix.Sigint, System.Null_Address);

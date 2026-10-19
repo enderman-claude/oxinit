@@ -12,6 +12,18 @@ It works. It is predictable. It requires you to type a lot.
 - Gives up on a service that crashes more than 5 times in 60 seconds.
 - On SIGTERM or SIGINT, sends each service its eviction notice, waits its grace period, then SIGKILLs anything left.
 
+## SHARD services (started)
+
+A service whose `!summon` file starts with the SHARD magic is converted to ELF in memory
+(libshard, from `vendor/shard`) and run from a memfd. The conversion runs before the fork,
+and a service that cannot be staged is never executed.
+
+Current limits:
+- Only SHARD images with no relocations run. Images with relocations are refused with a reason,
+  because the Linux path does not apply relocations yet.
+- Conversion happens at launch, not at config check time.
+- Build libshard first: `make -C vendor/shard build/libshard.a`.
+
 ## What it does not do
 
 - Dependency ordering. Everything starts at once.

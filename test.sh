@@ -48,6 +48,7 @@ run_check() { OUT=$(./bin/oxinit --check "$1" 2>&1); RC=$?; }
 echo "Running oxinit tests. Hold your breath, MEDIC is on standby."
 make -s -C memeunit && check "memeunit builds with -Werror" "[ -f memeunit/libmemeunit.a ]"
 check "memeunit picks: species lines, stable seeds, generic fallback" "make -s -C memeunit test >/dev/null 2>&1"
+make -s -C vendor/shard build/libshard.a >/dev/null 2>&1
 gprbuild -P oxinit_prj.gpr -q >/dev/null 2>&1 && check "oxinit builds with gprbuild" "[ -x bin/oxinit ]"
 
 base_svc > "$TMP/base.oxi"
@@ -165,6 +166,22 @@ check "service lines use the mood prefix" "grep -q '^~ heartbeat' $ALL && grep -
 check "routine lines stay off the console after boot" "! grep -q 'restarting in' '$LOG'"
 check "routine lines go to the log file" "grep -q 'flaky restarting in' '$OXINIT_LOG'"
 check "oxinit exits cleanly" "grep -q '^oxinit: exiting' '$LOG'"
+
+# SHARD services: a converted image runs and reports its exit code; images with relocations
+# and damaged headers are refused with a reason, and never run.
+shard_svc() {
+    base_svc | sed "s|^!summon .*|!summon $1|; s|^!lives .*|!lives               never|"
+}
+shard_svc "$PWD/test/fixtures/exit42.shard" > "$TMP/shard-ok.oxi"
+shard_svc "$PWD/test/fixtures/relocs.shard" > "$TMP/shard-reloc.oxi"
+printf 'SHRD\x00\x00' > "$TMP/shard-bad.bin"
+shard_svc "$TMP/shard-bad.bin" > "$TMP/shard-bad.oxi"
+(OXINIT_LOG="$TMP/shard-ok.log" timeout 5 ./bin/oxinit "$TMP/shard-ok.oxi" > "$TMP/shard-ok.out" 2>&1; true)
+(OXINIT_LOG="$TMP/shard-reloc.log" timeout 5 ./bin/oxinit "$TMP/shard-reloc.oxi" > "$TMP/shard-reloc.out" 2>&1; true)
+(OXINIT_LOG="$TMP/shard-bad.log" timeout 5 ./bin/oxinit "$TMP/shard-bad.oxi" > "$TMP/shard-bad.out" 2>&1; true)
+check "SHARD service converts, runs and reports exit code 42" "grep -q 'exited with code 42' '$TMP/shard-ok.out' '$TMP/shard-ok.log' 2>/dev/null"
+check "SHARD image with relocations is refused with a reason" "grep -q 'relocations' '$TMP/shard-reloc.out' '$TMP/shard-reloc.log' 2>/dev/null && ! grep -q 'exited with code' '$TMP/shard-reloc.out' 2>/dev/null"
+check "damaged SHARD header is refused and never runs" "grep -q 'invalid SHARD image' '$TMP/shard-bad.out' '$TMP/shard-bad.log' 2>/dev/null && ! grep -q 'exited with code' '$TMP/shard-bad.out' 2>/dev/null"
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed."

@@ -72,4 +72,12 @@ package Oxinit.Posix is
 
    Reboot_Power_Off : constant C_Int := 16#4321FEDC#;
 
+   --  In-memory file, used to run SHARD services converted to ELF (see Oxinit.Shard_Format).
+   function Memfd_Create (Name : Interfaces.C.Strings.chars_ptr; Flags : C_Int) return C_Int;
+   pragma Import (C, Memfd_Create, "memfd_create");
+
+   function Write (Fd : C_Int; Buf : System.Address; Count : Interfaces.C.size_t)
+     return Interfaces.C.long;
+   pragma Import (C, Write, "write");
+
 end Oxinit.Posix;

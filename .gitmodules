@@ -1,0 +1,3 @@
+[submodule "vendor/shard"]
+	path = vendor/shard
+	url = https://github.com/enderman-claude/shard
