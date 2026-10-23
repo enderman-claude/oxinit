@@ -67,6 +67,7 @@ A config file is a list of services. Each service starts with `@name` and has ex
 9. `!amiafurry` is `true` or `false`. When it is `true`, `!fursona-name`, `!fursona-description`, and `!fursona-species` must each have a real value. When it is `false`, all three must be `-`.
 10. `!mood` must be one of the nine moods below.
 11. A service that crashes more than 5 times in 60 seconds is no longer restarted.
+12. A service runs with exactly its `!party` group as its only group. Supplementary groups oxinit inherited are cleared before the service starts.
 
 ### Fields
 

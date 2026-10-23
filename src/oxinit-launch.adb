@@ -142,6 +142,11 @@ package body Oxinit.Launch is
       if Posix.Chdir (P.Cwd) /= 0 then
          Posix.Exit_Now (126);
       end if;
+      --  The service runs with exactly its !party group. Supplementary groups
+      --  inherited from oxinit are cleared before the primary group changes.
+      if Posix.Setgroups (0, System.Null_Address) /= 0 then
+         Posix.Exit_Now (126);
+      end if;
       if Posix.Setgid (P.Gid) /= 0 then
          Posix.Exit_Now (126);
       end if;
