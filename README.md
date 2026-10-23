@@ -228,3 +228,10 @@ sh test/vm/vm-test.sh --services my.oxi --mem 1024 --cpus 2
 ```
 
 Run `sh test/vm/vm-test.sh --help` for all options. Quit QEMU with Ctrl-A then X.
+
+## Related repos
+
+- [tesseraOS](https://github.com/enderman-claude/tesseraOS): the OS oxinit is meant to run as PID 1 on. It is not in tesseraOS as a submodule yet.
+- [shard](https://github.com/enderman-claude/shard): vendored in `vendor/shard`. oxinit runs SHARD services by converting them with libshard.
+- [tessera](https://github.com/enderman-claude/tessera): the kernel underneath tesseraOS. oxinit waits on its syscall layer (see the tesseraOS roadmap).
+- [tesseraOS-teds](https://github.com/enderman-claude/tesseraOS-teds): the display server. oxinit can start it as a service once that exists.
