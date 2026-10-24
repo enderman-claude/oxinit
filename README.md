@@ -206,7 +206,7 @@ The boot log is in `build/vm/boot.log`.
 
 ## License
 
-Do what you want. If it eats your PID 1, that's on you.
+MIT. See [LICENSE](LICENSE). If it eats your PID 1, that's still on you.
 
 ## Manual testing in a VM
 
