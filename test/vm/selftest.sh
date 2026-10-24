@@ -21,6 +21,7 @@ check "heartbeat stays stopped" sh -c 'oxictl status | grep -q "heartbeat: stopp
 check "start heartbeat" sh -c 'oxictl start heartbeat | grep -q "ok: starting"'
 sleep 3
 check "heartbeat running again" sh -c 'oxictl status | grep -q "heartbeat: running"'
+check "heartbeat output reaches its log file" test -s /var/log/heartbeat.log
 check "unknown service is an error" sh -c '! oxictl stop nope'
 
 if [ $fail -eq 0 ]; then echo "SELFTEST PASS"; else echo "SELFTEST FAIL"; fi

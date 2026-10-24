@@ -12,7 +12,7 @@
 !cooldown            2s
 !eviction-notice     TERM
 !grace               5s
-!scoreboard          -
+!scoreboard          /var/log/heartbeat.log
 !amiafurry           false
 !fursona-name        -
 !fursona-description -
