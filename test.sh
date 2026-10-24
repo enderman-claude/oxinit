@@ -183,6 +183,116 @@ check "SHARD service converts, runs and reports exit code 42" "grep -q 'exited w
 check "SHARD image with relocations is refused with a reason" "grep -q 'relocations' '$TMP/shard-reloc.out' '$TMP/shard-reloc.log' 2>/dev/null && ! grep -q 'exited with code' '$TMP/shard-reloc.out' 2>/dev/null"
 check "damaged SHARD header is refused and never runs" "grep -q 'invalid SHARD image' '$TMP/shard-bad.out' '$TMP/shard-bad.log' 2>/dev/null && ! grep -q 'exited with code' '$TMP/shard-bad.out' 2>/dev/null"
 
+
+# ---- Regressions for issue #1: service control, process groups, socket hygiene.
+
+# 1. oxictl stop enforces !grace. A service that ignores its eviction notice is SIGKILLed.
+cat > "$TMP/stubborn.oxi" <<EOF
+@stubborn
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'trap "" TERM; while true; do sleep 1; done'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               1s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+EOF
+S_STUB="$TMP/stub.sock"
+(OXINIT_SOCKET="$S_STUB" ./bin/oxinit "$TMP/stubborn.oxi" > "$TMP/stub.run" 2>&1 &)
+sleep 2
+OXINIT_SOCKET="$S_STUB" ./bin/oxictl stop stubborn > /dev/null 2>&1
+sleep 3
+check "oxictl stop SIGKILLs a service that ignores its notice after !grace" \
+  "grep -q 'stubborn did not leave within its grace period' '$OXINIT_LOG' && OXINIT_SOCKET='$S_STUB' ./bin/oxictl status | grep -q 'stubborn: stopped'"
+pkill -TERM -f "bin/oxinit $TMP/stubborn.oxi" 2>/dev/null; sleep 2
+
+# 2. Stop reaches the whole process group, and children left behind by a leader that exited
+#    are removed. The leader exits at once and leaves a background sleep in its group.
+PIDFILE="$TMP/orphan.pid"
+cat > "$TMP/orphan.oxi" <<EOF
+@orphan
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'sleep 300 & echo \$! > $PIDFILE'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               1s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+EOF
+(OXINIT_SOCKET="$TMP/orphan.sock" ./bin/oxinit "$TMP/orphan.oxi" > "$TMP/orphan.run" 2>&1 &)
+sleep 3
+ORPHAN=$(cat "$PIDFILE" 2>/dev/null)
+ORPHAN_GONE=0
+if [ -n "$ORPHAN" ]; then
+  ST=$(awk '/^State:/{print $2}' "/proc/$ORPHAN/status" 2>/dev/null)
+  if [ -z "$ST" ] || [ "$ST" = Z ] || [ "$ST" = X ]; then ORPHAN_GONE=1; fi
+fi
+check "children left in the leader's process group are removed" \
+  "[ -n '$ORPHAN' ] && [ $ORPHAN_GONE -eq 1 ] && grep -q 'removed processes left in its group' '$OXINIT_LOG'"
+pkill -TERM -f "bin/oxinit $TMP/orphan.oxi" 2>/dev/null; sleep 2
+
+# 3. The control socket is close-on-exec: a service must not inherit it.
+FDLIST="$TMP/fds.txt"
+cat > "$TMP/fds.oxi" <<EOF
+@fds
+!mood                chill
+!summon              /bin/sh
+!incant              -c 'ls -l /proc/\$\$/fd > $FDLIST'
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               never
+!cooldown            0s
+!eviction-notice     TERM
+!grace               1s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+EOF
+(OXINIT_SOCKET="$TMP/fds.sock" ./bin/oxinit "$TMP/fds.oxi" > "$TMP/fds.run" 2>&1 &)
+sleep 3
+check "a service does not inherit the control socket" \
+  "[ -s '$FDLIST' ] && ! grep -q 'socket:' '$FDLIST'"
+pkill -TERM -f "bin/oxinit $TMP/fds.oxi" 2>/dev/null; sleep 1
+
+# 4. A client that connects and sends nothing cannot block the control socket.
+S_SLOW="$TMP/slow.sock"
+(OXINIT_SOCKET="$S_SLOW" ./bin/oxinit etc/services.oxi > "$TMP/slow.run" 2>&1 &)
+sleep 3
+python3 -c "
+import socket, time
+s = socket.socket(socket.AF_UNIX)
+s.connect('$S_SLOW')
+time.sleep(12)" &
+SLOWPID=$!
+sleep 1
+check "a silent client does not stop oxictl from getting a reply" \
+  "OXINIT_SOCKET='$S_SLOW' timeout 10 ./bin/oxictl status | grep -q 'heartbeat: running'"
+wait $SLOWPID 2>/dev/null
+pkill -TERM -f "bin/oxinit etc/services.oxi" 2>/dev/null
+sleep 2
+
 echo ""
 echo "Results: $PASS passed, $FAIL failed."
 [ $FAIL -eq 0 ]

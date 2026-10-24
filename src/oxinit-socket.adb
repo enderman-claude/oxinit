@@ -12,9 +12,26 @@ package body Oxinit.Socket is
    package CS renames Interfaces.C.Strings;
    package US renames Ada.Strings.Unbounded;
 
-   AF_UNIX     : constant Interfaces.C.int := 1;
-   SOCK_STREAM : constant Interfaces.C.int := 1;
-   LF          : constant Character := ASCII.LF;
+   AF_UNIX      : constant Interfaces.C.int := 1;
+   SOCK_STREAM  : constant Interfaces.C.int := 1;
+   SOCK_CLOEXEC : constant Interfaces.C.int := 16#80000#;  --  children must not inherit the socket
+   SOL_SOCKET   : constant Interfaces.C.int := 1;
+   SO_RCVTIMEO  : constant Interfaces.C.int := 20;
+   SO_SNDTIMEO  : constant Interfaces.C.int := 21;
+   LF           : constant Character := ASCII.LF;
+
+   --  A request line longer than this is cut off. Commands are a few words.
+   Max_Line     : constant := 4096;
+
+   --  Seconds the server waits for a client to send its request. Kept short, so a silent
+   --  client delays the control socket for a moment only.
+   Server_Timeout : constant := 2;
+   --  Seconds oxictl waits for the server's reply. Longer than the server's own wait, so a
+   --  slow earlier client cannot make oxictl give up on a reply that is on its way.
+   Client_Timeout : constant := 10;
+
+   --  struct timeval: two C longs (seconds, microseconds).
+   type Timeval is array (0 .. 1) of Interfaces.C.long;
 
    function C_Socket (Domain, Kind, Proto : Interfaces.C.int) return Interfaces.C.int;
    pragma Import (C, C_Socket, "socket");
@@ -30,8 +47,13 @@ package body Oxinit.Socket is
    function C_Listen (Fd : Interfaces.C.int; Backlog : Interfaces.C.int) return Interfaces.C.int;
    pragma Import (C, C_Listen, "listen");
 
-   function C_Accept (Fd : Interfaces.C.int; Addr, Len : System.Address) return Interfaces.C.int;
-   pragma Import (C, C_Accept, "accept");
+   function C_Accept4 (Fd : Interfaces.C.int; Addr, Len : System.Address; Flags : Interfaces.C.int)
+      return Interfaces.C.int;
+   pragma Import (C, C_Accept4, "accept4");
+
+   function C_Setsockopt (Fd, Level, Name : Interfaces.C.int; Val : System.Address;
+                          Len : Interfaces.C.int) return Interfaces.C.int;
+   pragma Import (C, C_Setsockopt, "setsockopt");
 
    function C_Read (Fd : Interfaces.C.int; Buf : System.Address; Count : Interfaces.C.size_t)
       return Interfaces.C.long;
@@ -80,6 +102,18 @@ package body Oxinit.Socket is
       CS.Free (C);
    end Remove;
 
+   --  Gives a connection a receive and send timeout, so one silent peer cannot block the server.
+   procedure Set_Timeouts (Fd : Interfaces.C.int; Seconds : Interfaces.C.long) is
+      T : aliased Timeval := (Seconds, 0);
+      R : Interfaces.C.int;
+      pragma Unreferenced (R);
+   begin
+      R := C_Setsockopt (Fd, SOL_SOCKET, SO_RCVTIMEO, T'Address,
+                         Interfaces.C.int (Timeval'Size / 8));
+      R := C_Setsockopt (Fd, SOL_SOCKET, SO_SNDTIMEO, T'Address,
+                         Interfaces.C.int (Timeval'Size / 8));
+   end Set_Timeouts;
+
    function Listen (P : String) return Interfaces.C.int is
       Buf : Addr_Buf;
       Len : constant Interfaces.C.int := Make_Addr (P, Buf);
@@ -88,7 +122,7 @@ package body Oxinit.Socket is
       R   : Interfaces.C.int;
    begin
       Remove (P);
-      Fd := C_Socket (AF_UNIX, SOCK_STREAM, 0);
+      Fd := C_Socket (AF_UNIX, SOCK_STREAM + SOCK_CLOEXEC, 0);
       if Fd < 0 then
          CS.Free (C);
          return -1;
@@ -108,19 +142,25 @@ package body Oxinit.Socket is
    end Listen;
 
    function Accept_Client (Listener : Interfaces.C.int) return Interfaces.C.int is
+      Fd : constant Interfaces.C.int :=
+        C_Accept4 (Listener, System.Null_Address, System.Null_Address, SOCK_CLOEXEC);
    begin
-      return C_Accept (Listener, System.Null_Address, System.Null_Address);
+      if Fd >= 0 then
+         Set_Timeouts (Fd, Server_Timeout);
+      end if;
+      return Fd;
    end Accept_Client;
 
    function Connect_To (P : String) return Interfaces.C.int is
       Buf : Addr_Buf;
       Len : constant Interfaces.C.int := Make_Addr (P, Buf);
-      Fd  : constant Interfaces.C.int := C_Socket (AF_UNIX, SOCK_STREAM, 0);
+      Fd  : constant Interfaces.C.int := C_Socket (AF_UNIX, SOCK_STREAM + SOCK_CLOEXEC, 0);
       R   : Interfaces.C.int;
    begin
       if Fd < 0 then
          return -1;
       end if;
+      Set_Timeouts (Fd, Client_Timeout);
       if C_Connect (Fd, Buf'Address, Len) < 0 then
          R := C_Close (Fd);
          return -1;
@@ -135,9 +175,12 @@ package body Oxinit.Socket is
    begin
       loop
          N := C_Read (Fd, Buf'Address, 512);
-         exit when N <= 0;
+         exit when N <= 0;   --  end of stream, or the receive timeout expired
          for I in 1 .. Integer (N) loop
             if Stop_On_Lf and then Buf (I) = LF then
+               return US.To_String (Result);
+            end if;
+            if Stop_On_Lf and then US.Length (Result) >= Max_Line then
                return US.To_String (Result);
             end if;
             US.Append (Result, Buf (I));

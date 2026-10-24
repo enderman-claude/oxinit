@@ -4,6 +4,7 @@ with Interfaces.C;
 with Oxinit.Config;
 with Oxinit.Moods;
 with Oxinit.Output;
+with Oxinit.Grace;
 with Oxinit.Posix;
 with Oxinit.Table;
 with Oxinit.Types;
@@ -91,7 +92,9 @@ package body Oxinit.Commands is
                Table.Registry.Set_Want (Idx, False);
                Output.Svc_Line (Svc, "stop requested by oxictl", "stop");
                if Pid > 0 then
-                  Ignored := Posix.Kill (Pid, Interfaces.C.int (Svc.Notice));
+                  --  Negative pid: the notice reaches the whole process group, descendants included.
+                  Ignored := Posix.Kill (-Pid, Interfaces.C.int (Svc.Notice));
+                  Grace.Arm (Svc, Idx, Pid);
                end if;
                return "ok: stopping " & Arg;
             else
