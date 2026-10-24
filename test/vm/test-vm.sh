@@ -23,6 +23,7 @@ check "stop and start work inside the VM" "grep -q 'SELFTEST ok: heartbeat runni
 check "self-test passed" "grep -q 'SELFTEST PASS' '$LOG'"
 check "shutdown powered the machine off" "grep -q 'powering off' '$LOG'"
 check "no kernel panic" "! grep -q 'Kernel panic' '$LOG'"
+check "heartbeat output stays off the console" "! grep -q '^alive' '$LOG'"
 check "QEMU exited on its own, not by timeout" "[ $RC -ne 124 ]"
 
 echo ""
