@@ -25,6 +25,9 @@ jobs:
       - name: Build shard static library
         run: make -C vendor/shard build/libshard.a
 
+      - name: Build memeunit (linked into oxinit)
+        run: make -C memeunit
+
       - name: Build oxinit
         run: gprbuild -P oxinit_prj.gpr
 
