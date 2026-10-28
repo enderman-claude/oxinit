@@ -83,22 +83,27 @@ procedure Oxinit_Main is
       Ignored  : Interfaces.C.int;
       Svc      : Oxinit.Types.Service;
       Deadline : Ada.Real_Time.Time;
+      Notice_At : array (1 .. Oxinit.Types.Max_Services) of Ada.Real_Time.Time;
    begin
       Oxinit.Table.Registry.Begin_Stop;
       Oxinit.Output.Olog_Important ("shutdown requested");
+
+      --  Per service: when its eviction notice went out. Its grace period runs from then.
+      Notice_At := [others => Ada.Real_Time.Clock];
 
       for I in 1 .. Count loop
          Pid := Oxinit.Table.Registry.Pid_Of (I);
          if Pid > 0 then
             Svc := Service_Vectors.Element (Services, I);
             Oxinit.Output.Svc_Line (Svc, "received eviction notice", "stop", Important => True);
-            Ignored := Oxinit.Posix.Kill (Pid, Interfaces.C.int (Svc.Notice));
+            Notice_At (I) := Ada.Real_Time.Clock;
+            Ignored := Oxinit.Posix.Kill (-Pid, Interfaces.C.int (Svc.Notice));
          end if;
       end loop;
 
       for I in 1 .. Count loop
          Svc := Service_Vectors.Element (Services, I);
-         Deadline := Ada.Real_Time.Clock
+         Deadline := Notice_At (I)
            + Ada.Real_Time.To_Time_Span (Duration (Svc.Grace));
          while not Workers (I).all'Terminated and then Ada.Real_Time.Clock < Deadline loop
             delay 0.1;
@@ -108,7 +113,7 @@ procedure Oxinit_Main is
             Pid := Oxinit.Table.Registry.Pid_Of (I);
             if Pid > 0 then
                Oxinit.Output.Svc_Line (Svc, "did not leave, forced removal (SIGKILL)", "kill", Important => True);
-               Ignored := Oxinit.Posix.Kill (Pid, Oxinit.Posix.Sigkill);
+               Ignored := Oxinit.Posix.Kill (-Pid, Oxinit.Posix.Sigkill);
             end if;
             Deadline := Ada.Real_Time.Clock + Ada.Real_Time.To_Time_Span (5.0);
             while not Workers (I).all'Terminated and then Ada.Real_Time.Clock < Deadline loop

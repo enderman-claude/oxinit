@@ -2,6 +2,7 @@ with Ada.Real_Time;
 with Interfaces.C;
 with Oxinit.Config;
 with Oxinit.Output;
+with Oxinit.Posix;
 with Oxinit.Table;
 with Oxinit.Types;
 
@@ -58,11 +59,23 @@ package body Oxinit.Worker is
             Count := 0;
             delay 0.1;
          else
-            Table.Registry.Spawn (Idx, Pid, Ok);
-            if not Ok then
+            --  A failed fork is usually transient (process limit, memory). Retry until it
+            --  works, or until the service is stopped or oxinit is shutting down.
+            loop
+               Table.Registry.Spawn (Idx, Pid, Ok);
+               exit when Ok or else Table.Registry.Stopping or else not Table.Registry.Want (Idx);
                Count_First;   --  a failed spawn prints nothing, so count it now
+               Output.Svc_Line (Svc, "fork failed, retrying in 1s", "start", Important => True);
+               delay 1.0;
+            end loop;
+            if not Ok then
+               --  Stopping, or a stop request arrived before the start. Leave the loop
+               --  normally: the checks at the top of Main_Loop handle both cases.
+               if Table.Registry.Stopping then
+                  exit Main_Loop;
+               end if;
+               goto Next_Round;
             end if;
-            exit Main_Loop when not Ok;
 
             if not Started then
                Output.Svc_Rule (Svc);
@@ -75,6 +88,14 @@ package body Oxinit.Worker is
             Table.Boxes (Idx).Get (Status);
             Code := Exit_Code (Status);
             Output.Svc_Line (Svc, "exited with code " & Types.Img (Code), "exit");
+
+            --  The leader is gone, but it may have left children in its process group.
+            --  Remove them. This is only a sound target while nothing else can reuse the
+            --  group id; see the notes in the pull request.
+            if Posix.Kill (-Pid, Posix.Sigkill) = 0 then
+               Output.Svc_Line (Svc, "removed processes left in its group (SIGKILL)", "kill",
+                                Important => True);
+            end if;
 
             if Table.Registry.Stopping then
                Output.Svc_Line (Svc, "left during shutdown", "stop");
@@ -143,6 +164,7 @@ package body Oxinit.Worker is
                end if;
             end if;
          end if;
+         <<Next_Round>> null;
       end loop Main_Loop;
    end Worker;
 

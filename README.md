@@ -155,11 +155,14 @@ A running oxinit listens on a Unix socket at `/run/oxinit.sock`, or at `$OXINIT_
 
 ```sh
 oxictl status          # each service: state, pid, mood, furry flag
-oxictl stop NAME       # send the eviction notice, keep it down until started again
+oxictl stop NAME       # send the eviction notice to the service's process group, keep it down
+                       # until started again. If it is still running after !grace, SIGKILL.
 oxictl start NAME      # bring a stopped or given-up service back up
 ```
 
 Exit status is 0 on success and 1 on an error reply, such as an unknown service name.
+
+Requests are bounded: a line is cut at 4096 bytes, and a client that sends nothing is dropped after 2 seconds.
 
 `reload` is not implemented yet. The service list is read once at startup.
 
