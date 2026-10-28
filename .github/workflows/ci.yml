@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [master, "ci/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install GNAT 13 and gprbuild
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnat-13 gprbuild make gcc
+
+      - name: Build shard static library
+        run: make -C vendor/shard build/libshard.a
+
+      - name: Build oxinit
+        run: gprbuild -P oxinit_prj.gpr
+
+      - name: Test suite (needs root for the PID namespace step)
+        run: sudo ./test.sh
