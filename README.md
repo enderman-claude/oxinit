@@ -204,6 +204,8 @@ Without KVM (`/dev/kvm`), QEMU uses software emulation. It is slower but gives t
 
 The boot log is in `build/vm/boot.log`.
 
+*Footnote: oxinit is PID 1, so it never gets a day off. It just restarts the services that did.*
+
 ## License
 
 Do what you want. If it eats your PID 1, that's on you.
