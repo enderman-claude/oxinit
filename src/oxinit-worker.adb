@@ -1,6 +1,8 @@
 with Ada.Real_Time;
+with Ada.Strings.Unbounded;
 with Interfaces.C;
 with Oxinit.Config;
+with Oxinit.Motd;
 with Oxinit.Output;
 with Oxinit.Table;
 with Oxinit.Types;
@@ -58,6 +60,10 @@ package body Oxinit.Worker is
             Count := 0;
             delay 0.1;
          else
+            --  Before a special name boots, /etc/motd gets the fleet counts (issue #15).
+            if Types.Quiet_Marker (Ada.Strings.Unbounded.To_String (Svc.Name)) then
+               Motd.Write_Once;
+            end if;
             Table.Registry.Spawn (Idx, Pid, Ok);
             if not Ok then
                Count_First;   --  a failed spawn prints nothing, so count it now
@@ -76,6 +82,10 @@ package body Oxinit.Worker is
             Table.Boxes (Idx).Get (Status);
             Code := Exit_Code (Status);
             Output.Svc_Line (Svc, "exited with code " & Types.Img (Code), "exit");
+            --  A crash is a nonzero exit or a signal, while oxinit still wants the service up.
+            if Code /= 0 and then Table.Registry.Want (Idx) and then not Table.Registry.Stopping then
+               Motd.Mark_Crashed (Idx);
+            end if;
 
             if Table.Registry.Stopping then
                Output.Svc_Line (Svc, "left during shutdown", "stop");
