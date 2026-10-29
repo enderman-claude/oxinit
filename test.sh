@@ -144,10 +144,10 @@ check "shutdown lines still reach the console" "grep -q 'oxinit: shutdown reques
 # Issue #15: /etc/motd gets fleet counts before a special name boots.
 check "motd fixture passes --check" "./bin/oxinit --check test/units/motd.oxi >/dev/null 2>&1"
 OXINIT_MOTD="$TMP/motd.txt" OXINIT_LOG="$TMP/motd.log" timeout 3 ./bin/oxinit test/units/motd.oxi > "$TMP/motd.out" 2>&1; true
-check "motd counts furries and non furries" "grep -qx 'furries: 2' '$TMP/motd.txt' && grep -qx 'non furries: 2' '$TMP/motd.txt'"
-check "motd gives the furry ratio" "grep -q '^furry ratio: 2:2' '$TMP/motd.txt'"
-check "motd counts crashes (none in this run)" "grep -qx 'total crashed: 0' '$TMP/motd.txt' && grep -q '^crash ratio: 0:0' '$TMP/motd.txt'"
-check "motd counts spies as suspicious furries" "grep -qx 'suspicious furries: 1 (spies count as furries)' '$TMP/motd.txt'"
+check "motd counts furries and non furries" "grep -qE '^furries: +2$' '$TMP/motd.txt' && grep -qE '^non furries: +2$' '$TMP/motd.txt'"
+check "motd reduces the furry ratio" "grep -qE '^furry ratio: +1:1$' '$TMP/motd.txt'"
+check "motd counts crashes (none in this run)" "grep -qE '^total crashed: +0$' '$TMP/motd.txt' && grep -qE '^crash ratio: +0:0$' '$TMP/motd.txt'"
+check "motd counts spies as suspicious furries" "grep -qE '^suspicious furries: +1$' '$TMP/motd.txt'"
 check "motd exists once the special service has started (order not checked)" "[ -s '$TMP/motd.txt' ] && grep -q 'login started' '$TMP/motd.out'"
 OXINIT_MOTD=/nonexistent/dir/motd timeout 3 ./bin/oxinit test/units/motd.oxi > "$TMP/motd2.out" 2>&1; true
 check "an unwritable motd is reported and boot goes on" "grep -q 'cannot write /nonexistent/dir/motd' '$TMP/motd2.out' && grep -q 'login started' '$TMP/motd2.out'"

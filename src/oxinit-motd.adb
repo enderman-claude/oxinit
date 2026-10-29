@@ -2,7 +2,7 @@ with Ada.Characters.Handling;
 with Ada.Environment_Variables;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
+with Ada.Streams.Stream_IO;
 with Oxinit.Config;
 with Oxinit.Output;
 with Oxinit.Types;
@@ -58,9 +58,23 @@ package body Oxinit.Motd is
       return S;
    end Img;
 
-   --  Raw counts, first : second. No reduction, and no division, so 0:0 is fine.
+   function GCD (A, B : Natural) return Natural is
+   begin
+      if B = 0 then
+         return A;
+      end if;
+      return GCD (B, A mod B);
+   end GCD;
+
+   --  Reduced to lowest terms. 0:0 stays 0:0.
    function Ratio (First, Second : Natural) return String is
-     (Img (First) & ":" & Img (Second));
+      G : constant Natural := GCD (First, Second);
+   begin
+      if G = 0 then
+         return "0:0";
+      end if;
+      return Img (First / G) & ":" & Img (Second / G);
+   end Ratio;
 
    function Is_Spy (Svc : Types.Service) return Boolean is
      (Ada.Strings.Fixed.Index
@@ -71,10 +85,15 @@ package body Oxinit.Motd is
       then Ada.Environment_Variables.Value ("OXINIT_MOTD")
       else "/etc/motd");
 
+   --  Label padded to one column, then the value. One line, ending in LF.
+   Label_Width : constant := 21;
+
+   function Row (Label, Value : String) return String is
+     (Ada.Strings.Fixed.Head (Label, Label_Width) & Value & ASCII.LF);
+
    function Text return String is
       Furries, Plain, Furry_Crashed, Plain_Crashed, Spies : Natural := 0;
       Total : constant Natural := Natural (Config.Service_Vectors.Length (Config.Services));
-      Nl    : constant String := (1 => ASCII.LF);
    begin
       for I in 1 .. Total loop
          declare
@@ -99,22 +118,19 @@ package body Oxinit.Motd is
       end loop;
 
       return
-        "furries: " & Img (Furries) & Nl
-        & "non furries: " & Img (Plain) & Nl
-        & "furry ratio: " & Ratio (Furries, Plain) & " (furries:non furries)" & Nl
-        & "furries crashed: " & Img (Furry_Crashed) & Nl
-        & "non furries crashed: " & Img (Plain_Crashed) & Nl
-        & "crash ratio: " & Ratio (Furry_Crashed, Plain_Crashed)
-          & " (furries:non furries)" & Nl
-        & "total crashed: " & Img (Furry_Crashed + Plain_Crashed) & Nl
-        & (if Spies > 0
-           then "suspicious furries: " & Img (Spies) & " (spies count as furries)" & Nl
-           else "");
+        Row ("furries:", Img (Furries))
+        & Row ("non furries:", Img (Plain))
+        & Row ("furry ratio:", Ratio (Furries, Plain))
+        & Row ("furries crashed:", Img (Furry_Crashed))
+        & Row ("non furries crashed:", Img (Plain_Crashed))
+        & Row ("crash ratio:", Ratio (Furry_Crashed, Plain_Crashed))
+        & Row ("total crashed:", Img (Furry_Crashed + Plain_Crashed))
+        & (if Spies > 0 then Row ("suspicious furries:", Img (Spies)) else "");
    end Text;
 
    procedure Write_Once is
       First : Boolean;
-      F     : Ada.Text_IO.File_Type;
+      F     : Ada.Streams.Stream_IO.File_Type;
       Path  : constant String := Motd_Path;
    begin
       Gate.Claim (First);
@@ -123,9 +139,10 @@ package body Oxinit.Motd is
       end if;
 
       begin
-         Ada.Text_IO.Create (F, Ada.Text_IO.Out_File, Path);
-         Ada.Text_IO.Put (F, Text);
-         Ada.Text_IO.Close (F);
+         --  Raw bytes, so the file holds exactly the text built above.
+         Ada.Streams.Stream_IO.Create (F, Ada.Streams.Stream_IO.Out_File, Path);
+         String'Write (Ada.Streams.Stream_IO.Stream (F), Text);
+         Ada.Streams.Stream_IO.Close (F);
       exception
          when others =>
             Oxinit.Output.Olog_Important ("cannot write " & Path & ", continuing without a motd");
