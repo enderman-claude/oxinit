@@ -118,11 +118,38 @@ package body Oxinit.Output is
       return Text;
    end Styled;
 
+   --  Set by a special-name service (issue #15). Never cleared.
+   protected Quiet_Flag is
+      procedure Set;
+      function Is_Set return Boolean;
+   private
+      Flag : Boolean := False;
+   end Quiet_Flag;
+
+   protected body Quiet_Flag is
+      procedure Set is
+      begin
+         Flag := True;
+      end Set;
+
+      function Is_Set return Boolean is
+      begin
+         return Flag;
+      end Is_Set;
+   end Quiet_Flag;
+
    --  Sends one line to the right channel.
    --  Plain is the text for the log file, Shown is the text for the console.
    procedure Route (Plain, Shown : String; Important : Boolean) is
       Written : Boolean;
    begin
+      if Quiet_Flag.Is_Set and then not Important then
+         --  Console is handed over (login, graphical, shell or booted has started).
+         --  Routine lines go to the log only. No console fallback.
+         Log.Write (Plain, Written);
+         return;
+      end if;
+
       if not Boot.Done then
          Console.Emit (Shown);
          return;
@@ -189,6 +216,13 @@ package body Oxinit.Output is
    begin
       Route (Plain, Styled (Plain, Moods.Style (M)), Important);
    end Svc_Line;
+
+   procedure Go_Quiet (Svc : Types.Service) is
+   begin
+      if Types.Quiet_Marker (US.To_String (Svc.Name)) then
+         Quiet_Flag.Set;
+      end if;
+   end Go_Quiet;
 
    procedure Svc_Rule (Svc : Types.Service) is
       M    : constant Types.Mood_Kind := Svc.Mood;

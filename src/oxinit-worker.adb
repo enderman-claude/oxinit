@@ -71,6 +71,7 @@ package body Oxinit.Worker is
             Table.Registry.Set_State (Idx, Types.Running);
             Output.Svc_Line (Svc, "started (pid " & Types.Img (Integer (Pid)) & ")", "start");
             Count_First;   --  count only after the start line is out, so it reaches the console
+            Output.Go_Quiet (Svc);   --  special names hand the console over here (issue #15)
 
             Table.Boxes (Idx).Get (Status);
             Code := Exit_Code (Status);

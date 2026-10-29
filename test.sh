@@ -129,6 +129,18 @@ check "duplicate service name is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | g
 echo "!mood chill" > "$TMP/t.oxi"; run_check "$TMP/t.oxi"
 check "a field before any service is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | grep -q 'before any @service'"
 
+# Issue #15: special names hand the console over, and "-" writes nowhere.
+check "special-name fixture passes --check" "./bin/oxinit --check test/units/special-names.oxi >/dev/null 2>&1"
+base_svc | sed 's|^!scoreboard .*|!scoreboard /dev/tty1|' > "$TMP/t.oxi"; run_check "$TMP/t.oxi"
+check "scoreboard on a terminal is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | grep -q 'is a terminal'"
+base_svc | sed 's|^!scoreboard .*|!scoreboard /dev/pts/0|' > "$TMP/t.oxi"; run_check "$TMP/t.oxi"
+check "scoreboard on a pts terminal is rejected" "[ \$RC -eq 1 ] && echo \"\$OUT\" | grep -q 'is a terminal'"
+OXINIT_LOG="$TMP/quiet.log" timeout 7 ./bin/oxinit test/units/special-names.oxi > "$TMP/quiet.out" 2>&1; true
+check "login starts and its line reaches the console" "grep -q 'login started' '$TMP/quiet.out'"
+check "routine lines stop on the console once a special name starts" "! grep -q 'crasher restarting in' '$TMP/quiet.out' && grep -q 'crasher restarting in' '$TMP/quiet.log'"
+check "scoreboard - sends service output nowhere" "! grep -q CHATTY-OUT '$TMP/quiet.out' '$TMP/quiet.log'"
+check "shutdown lines still reach the console" "grep -q 'oxinit: shutdown requested' '$TMP/quiet.out'"
+
 # Control socket: oxictl against a live init, using a temporary socket path.
 SOCK="$TMP/ctl.sock"
 (OXINIT_SOCKET="$SOCK" ./bin/oxinit etc/services.oxi > "$TMP/ctl.log" 2>&1 & echo $! > "$TMP/ox.pid")

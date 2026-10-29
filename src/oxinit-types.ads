@@ -59,5 +59,9 @@ package Oxinit.Types is
    --  Signal number for a name without SIG; 0 if unsupported.
    function Signal_Number (Name : String) return Natural;
    function Img (N : Integer) return String;
+   --  True for the special service names (without the @) that hand the console
+   --  over: login, graphical, shell, booted. Once such a service makes its first
+   --  start attempt, routine lines stop going to the console (issue #15).
+   function Quiet_Marker (Name : String) return Boolean;
 
 end Oxinit.Types;

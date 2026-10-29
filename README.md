@@ -68,6 +68,8 @@ A config file is a list of services. Each service starts with `@name` and has ex
 10. `!mood` must be one of the nine moods below.
 11. A service that crashes more than 5 times in 60 seconds is no longer restarted.
 12. A service runs with exactly its `!party` group as its only group. Supplementary groups oxinit inherited are cleared before the service starts.
+13. A service named `login`, `graphical`, `shell`, or `booted` (written `@login` and so on) is a special name. From the moment its first start attempt is made, routine lines stop going to the console. Lines marked important (shutdown, fatal errors, the boot message) still print. See "Special names" below.
+14. `!scoreboard -` means no output. The service's stdout and stderr go to `/dev/null`. No service ever writes to a terminal: a `!scoreboard` path under `/dev/tty*`, `/dev/pts/`, or `/dev/console` is an error.
 
 ### Fields
 
@@ -84,7 +86,7 @@ A config file is a list of services. Each service starts with `@name` and has ex
 | `!cooldown` | Base restart delay | Whole seconds with `s`, such as `2s`. Doubles after each crash, capped at 30s. `0s` for no delay. |
 | `!eviction-notice` | Signal sent on shutdown | Name without `SIG`: `HUP`, `INT`, `QUIT`, `USR1`, `USR2`, or `TERM`. No `-`. |
 | `!grace` | Time before forced removal | Whole seconds with `s`, such as `10s`. After this, the process gets SIGKILL. |
-| `!scoreboard` | Log destination | Absolute path, or `-` for stdout. |
+| `!scoreboard` | Log destination | Absolute path to a file, or `-` for no output (rule 14). |
 | `!amiafurry` | Furry flag | `true` or `false`. No `-`. No runtime effect. |
 | `!fursona-name` | Fursona's name | Rule 9. |
 | `!fursona-description` | Fursona's description | Rule 9. |
@@ -114,7 +116,20 @@ Plain `oxinit:` lines (boot, shutdown, config errors) have no mood and no color.
 
 Before boot finishes, everything goes to the console. After boot, routine lines (service starts, restarts, crashes, `oxictl` requests) go to a log file, so the console stays readable. Shutdown messages and fatal errors always go to the console.
 
-The log is `$OXINIT_LOG` when set, otherwise `/var/log/oxinit.log`. If the log cannot be opened, routine lines fall back to the console. Use the `!scoreboard` field to send one service's own output to a file.
+The log is `$OXINIT_LOG` when set, otherwise `/var/log/oxinit.log`. If the log cannot be opened, routine lines fall back to the console (unless a special name has handed the console over; see above). Use the `!scoreboard` field to send one service's own output to a file. `!scoreboard -` discards it.
+
+### Special names
+
+A service whose name is `login`, `graphical`, `shell`, or `booted` hands the console over when it starts. Its first start attempt is the point where the switch happens. After that point:
+
+- routine lines (restarts, crashes, service exits, `oxictl` requests) go to the log file only, and do not fall back to the console if the log cannot be opened;
+- important lines (shutdown, forced kills, fatal errors) still print to the console.
+
+The special service's own start line is printed, because it happens before the switch. The switch is one-way: a later restart of the same service does not turn the console back on.
+
+This is intended for a console getty such as `@login`, which runs `/sbin/agetty` on the tty itself. Pair it with `!scoreboard -`, which keeps a service off the console.
+
+The reading of "suppress all logs after it" used here is the one written in issue #15. It is not in `docs/targets.md`, so it still needs confirmation. See the assumptions in that issue.
 
 ### Memes
 

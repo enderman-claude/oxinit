@@ -10,6 +10,12 @@ package body Oxinit.Validate is
 
    use Oxinit.Checks;
 
+   function Starts_With (S, Prefix : String) return Boolean is
+   begin
+      return S'Length >= Prefix'Length
+        and then S (S'First .. S'First + Prefix'Length - 1) = Prefix;
+   end Starts_With;
+
    function Build (Raw : Parser.Raw_Service) return Types.Service is
       Svc     : Types.Service;
       Missing : US.Unbounded_String;
@@ -123,7 +129,13 @@ package body Oxinit.Validate is
          V : constant String := Text (Raw, Types.Scoreboard);
       begin
          if V /= "-" and then not Is_Absolute (V) then
-            Bad (Raw, Types.Scoreboard, "must be an absolute path, or - for stdout");
+            Bad (Raw, Types.Scoreboard, "must be an absolute path, or - for no output");
+         end if;
+         if Starts_With (V, "/dev/tty") or else Starts_With (V, "/dev/pts/")
+           or else Starts_With (V, "/dev/console")
+         then
+            Bad (Raw, Types.Scoreboard,
+                 "is a terminal; services never write to a terminal, use - for no output");
          end if;
          Svc.Scoreboard := US.To_Unbounded_String (V);
       end;
