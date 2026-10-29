@@ -36,6 +36,12 @@ package Oxinit.Output is
                        Kind      : String := "";
                        Important : Boolean := False);
 
+   --  Called after a service's first start attempt. If the service is a special
+   --  name (login, graphical, shell, booted), routine lines stop going to the
+   --  console from then on. Lines marked Important still print. Routine lines still
+   --  go to the log file. Once set, it stays set.
+   procedure Go_Quiet (Svc : Types.Service);
+
    --  Border rule printed once before a service's first line.
    procedure Svc_Rule (Svc : Types.Service);
 

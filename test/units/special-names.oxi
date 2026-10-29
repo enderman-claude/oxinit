@@ -1,0 +1,57 @@
+# Issue #15. @chatty writes to the console, but its scoreboard is "-", so its
+# output must go nowhere. @crasher crashes about 2 s in, so its restart lines
+# come after @login starts. @login is a special name, so from then on routine
+# lines stay off the console and go to the log only.
+@chatty
+!mood chill
+!summon /bin/sh
+!incant -c 'while true; do echo CHATTY-OUT; sleep 1; done'
+!arena /
+!role root
+!party root
+!loadout -
+!lives always
+!cooldown 1s
+!eviction-notice TERM
+!grace 2s
+!scoreboard -
+!amiafurry false
+!fursona-name -
+!fursona-description -
+!fursona-species -
+
+@crasher
+!mood grumpy
+!summon /bin/sh
+!incant -c 'sleep 2; exit 1'
+!arena /
+!role root
+!party root
+!loadout -
+!lives always
+!cooldown 1s
+!eviction-notice TERM
+!grace 2s
+!scoreboard -
+!amiafurry false
+!fursona-name -
+!fursona-description -
+!fursona-species -
+
+@login
+!mood sleepy
+!summon /bin/sleep
+!incant 60
+!arena /
+!role root
+!party root
+!loadout -
+!lives always
+!cooldown 1s
+!eviction-notice TERM
+!grace 2s
+!scoreboard -
+!amiafurry false
+!fursona-name -
+!fursona-description -
+!fursona-species -

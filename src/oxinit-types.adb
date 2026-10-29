@@ -63,4 +63,10 @@ package body Oxinit.Types is
       end if;
    end Img;
 
+   function Quiet_Marker (Name : String) return Boolean is
+   begin
+      return Name = "login" or else Name = "graphical"
+        or else Name = "shell" or else Name = "booted";
+   end Quiet_Marker;
+
 end Oxinit.Types;

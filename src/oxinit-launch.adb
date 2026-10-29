@@ -99,8 +99,14 @@ package body Oxinit.Launch is
                Stage_Shard (I, Svc);
             end if;
             Prepared (I).Cwd := CS.New_String (US.To_String (Svc.Cwd));
-            Prepared (I).Log := CS.New_String (US.To_String (Svc.Scoreboard));
-            Prepared (I).Log_To_File := US.To_String (Svc.Scoreboard) /= "-";
+            --  "-" means no output: the child writes to /dev/null, never to the
+            --  console or a terminal (issue #15). An absolute path goes to that file.
+            if US.To_String (Svc.Scoreboard) = "-" then
+               Prepared (I).Log := CS.New_String ("/dev/null");
+            else
+               Prepared (I).Log := CS.New_String (US.To_String (Svc.Scoreboard));
+            end if;
+            Prepared (I).Log_To_File := True;
             Prepared (I).Uid := Posix.C_Int (Svc.Uid);
             Prepared (I).Gid := Posix.C_Int (Svc.Gid);
             Prepared (I).Argv := Make (Argv);

@@ -1,0 +1,72 @@
+# Issue #15 motd test: two furries (one spy), two non-furries, nothing crashes.
+@alpha
+!mood                chill
+!summon              /bin/sleep
+!incant              60
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        alpha
+!fursona-description A fursona for the motd test.
+!fursona-species     wolf
+
+@beta
+!mood                sus
+!summon              /bin/sleep
+!incant              60
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           true
+!fursona-name        beta
+!fursona-description A fursona for the motd test.
+!fursona-species     Spy
+
+@gamma
+!mood                chill
+!summon              /bin/sleep
+!incant              60
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
+
+@login
+!mood                sleepy
+!summon              /bin/sleep
+!incant              60
+!arena               /
+!role                root
+!party               root
+!loadout             -
+!lives               always
+!cooldown            1s
+!eviction-notice     TERM
+!grace               2s
+!scoreboard          -
+!amiafurry           false
+!fursona-name        -
+!fursona-description -
+!fursona-species     -
